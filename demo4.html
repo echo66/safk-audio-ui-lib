@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="linear-scale.js"></script>
+		<script type="text/javascript" src="layers/segments-layer.js"></script>
+
+		<style type="text/css">
+
+			layer {
+				overflow: hidden; 
+				top: 0px; 
+				position: absolute; 
+				height: 30px; 
+				width: 500px; 
+				background-color: none;
+			}
+
+			segment {
+				position: absolute; 
+				width: 60px; 
+				height: 30px; 
+				/*background-color: green;*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<ttrack id="track1">
+		</ttrack>
+
+		<script type="text/javascript">
+			function load_sample(audioCtx, url, callback) {
+				var request = new XMLHttpRequest();
+				request.open('GET', url, true);
+				request.responseType = 'arraybuffer';
+					request.onload = function() {
+					audioCtx.decodeAudioData(request.response, function(decodedData) {
+						callback(decodedData);
+					});
+				};
+				request.send();
+			};
+
+			function convert_canvas_to_image(canvas) {
+				var image, dataURL;
+				dataURL = canvas.toDataURL();
+				image = document.createElement('img');
+				image.src = dataURL;
+				// image.width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2))
+				// image.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2))
+				image.style.pointerEvents = 'none';
+				image.onselectstart="return false;" 
+					image.onmousedown="return false;"
+				image.unselectable = "on";
+				image.style.mozUserSelect = "mozNone";
+				image.style.khtmlUserSelect = "none";
+				image.style.webkitUserSelect = "none";
+				image.style.oUserSelect = "none";
+				image.style.userSelect = "none";
+				return image;
+			}
+
+			function render_waveform(datum, canvas, outerHTML) {
+				console.log('rendering waveform');
+				var ctx = canvas.getContext("2d");
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				var audioBuffer = datum.audioBuffer;
+
+				var bufStart = datum.bufferStart;
+				var bufEnd = datum.bufferEnd;
+
+				var il = audioBuffer.getChannelData(0);
+
+				var numSamples = bufEnd - bufStart;
+				canvas.width = Math.min(500, numSamples);
+				canvas.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
+				var numPixels  = canvas.width;
+
+				var pixelStep = numPixels / numSamples;
+
+
+				ctx.moveTo(0, 0);
+				ctx.beginPath();
+
+				var px = 0;
+
+				for (var i=bufStart; i<=bufEnd; i++) {
+					var valAm = il[i]
+					var valPx = l1._.valueToPixel(valAm);
+					ctx.lineTo(px, valPx);
+					px += pixelStep;
+				}
+
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = "red";
+				ctx.stroke();
+			}
+
+			var audioCtx = new AudioContext();
+			var audioBuffer, l1, data, lastCoords, lastEventType, selectedDatums, canvas = document.createElement('canvas');
+			load_sample(audioCtx, 'http://localhost/OLA-TS.js/07.%20Around%20The%20World.mp3', 
+				(decodedData) => {
+					audioBuffer = decodedData;
+
+					console.log('downloaded audio buffer');
+
+					data.forEach((d) => d.audioBuffer = audioBuffer);
+
+					l1 = new SegmentsLayer({
+						width: 1000, 
+						height: 100
+					});
+
+					track1.appendChild(l1.layerDomEl);
+
+					l1.get_datum = (hash) => {
+						for (let i=0; i<data.length; i++) 
+							if ((data[i].id + "") === hash)
+								return data[i];
+					};
+
+					l1.get_hash = (datum) => {
+						return datum.id + "";
+					};
+
+					l1.valueDomain[0] = -1;
+					l1.valueDomain[1] = +1;
+					l1.valueDomain = l1.valueDomain;
+
+					l1.timeDomain[0] = 0;
+					l1.timeDomain[1] = 100;
+					l1.timeDomain = l1.timeDomain;
+
+					lastEventType = undefined;
+					lastCoords = { x: undefined, y: undefined };
+					selectedDatums = new Set();
+
+					// l1._.accessors.color = (d, elementName) => {
+					// 	switch (elementName) {
+					// 		case 'background': 
+					// 			if (selectedDatums.has(d))
+					// 				return 'red';
+					// 			else 
+					// 				return 'cyan';
+					// 		case 'right-handler': 
+					// 		case 'left-handler': 
+					// 		case 'bottom-handler': 
+					// 		case 'top-handler': 
+					// 			return (d.handlerColor !== undefined)? d.handlerColor : 'blue';
+					// 	}
+					// };
+
+					// l1._.accessors.width = (d, elementName) => {
+					// 	if (selectedDatums.has(d)) 
+					// 		return 5;
+					// 	else 
+					// 		return 2;
+					// };
+
+					// l1._.accessors.zIndex = (d, elementName) => {
+					// 	switch (elementName) {
+					// 		case 'segment': 
+					// 			if (selectedDatums.has(d))
+					// 				return 2;
+					// 			else 
+					// 				return 1
+					// 		case 'right-handler': 
+					// 		case 'left-handler': 
+					// 		case 'bottom-handler': 
+					// 		case 'top-handler': 
+					// 		case 'background': 
+					// 		case 'content': 
+					// 			return (d.zIndex !== undefined)? d.zIndex : 1;
+					// 	}
+					// };
+
+					l1._.accessors.innerHTML = (d, outerHTML) => {
+						if (!d.image || d.render) {
+							canvas.style.pointerEvents = 'none';
+							render_waveform(d, canvas, outerHTML);
+							d.image = convert_canvas_to_image(canvas);
+							d.image.width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2))
+							d.image.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2))
+							d.render = false;
+						}
+						return d.image;
+					};
+
+					data.forEach((datum) => l1.set(datum));
+
+					
+
+					l1.on('mousedown', mousedown);
+				});
+
+			data = [
+				{ 
+					id: 0, 
+					time: 10 * 0, 
+					duration: 10, 
+					backgroundColor: 'cyan', 
+					lowValue: -1, 
+					highValue: 1, 
+					bufferStart: 200000, 
+					bufferEnd: 200000 + Math.random() * 100000
+				}, 
+				{ 
+					id: 1, 
+					time: 10 * 1, 
+					duration: 10, 
+					backgroundColor: 'cyan', 
+					lowValue: -1, 
+					highValue: 1, 
+					bufferStart: 200000, 
+					bufferEnd: 200000 + Math.random() * 100000
+				}, 
+				{ 
+					id: 2, 
+					time: 10 * 2, 
+					duration: 10, 
+					backgroundColor: 'cyan', 
+					lowValue: -1, 
+					highValue: 1, 
+					bufferStart: 200000, 
+					bufferEnd: 200000 + Math.random() * 100000
+				}, 
+				{ 
+					id: 3, 
+					time: 10 * 3, 
+					duration: 10, 
+					backgroundColor: 'cyan', 
+					lowValue: -1, 
+					highValue: 1, 
+					bufferStart: 200000, 
+					bufferEnd: 200000 + Math.random() * 100000
+				}, 
+				{ 
+					id: 4, 
+					time: 10 * 4, 
+					duration: 10, 
+					backgroundColor: 'cyan', 
+					lowValue: -1, 
+					highValue: 1, 
+					bufferStart: 200000, 
+					bufferEnd: 200000 + Math.random() * 100000
+				}, 
+			];
+
+			let mousedown = (e) => {
+				lastEventType = e.type;
+				lastCoords.x = e.clientX;
+				lastCoords.y = e.clientY;
+
+				selectioncheck(e);
+
+				l1.on('mousemove', drag);
+				l1.on('mouseup', dragend);
+
+				console.log('mousedown');
+			};
+
+			let drag = (e) => {
+				if (lastEventType === 'mousemove')
+					console.log('drag');
+				else if (lastEventType === 'mousedown')
+					console.log('start drag');
+				lastEventType = e.type;
+
+				l1.off('mousedown', mousedown);
+
+				selectedDatums.forEach((datum) => {
+					let dx = e.clientX - lastCoords.x;
+					let px = l1._.timeToPixel(datum.time);
+					datum.time = l1._.timeToPixel.invert(px + dx);
+					l1.set(datum);
+				});
+
+				lastCoords.x = e.clientX;
+				lastCoords.y = e.clientY;
+			};
+
+			let dragend = (e) => {
+				lastCoords.x = e.clientX;
+				lastCoords.y = e.clientY;
+				l1.off('mousemove', drag);
+				l1.off('mouseup', dragend);
+				console.log('end drag');
+				lastEventType = e.type;
+
+				l1.on('mousedown', mousedown);
+				// targetDatum = undefined;
+			};
+
+			let selectioncheck = (e) => {
+				if (!e.shiftKey) {
+					selectedDatums.clear();
+					console.log('unselected all');
+				} 
+				let hash = e.target.dataset.hash;
+				let datum = l1.get_datum(hash);
+
+				if (datum) {
+					selectedDatums.add(datum);
+					console.log('selected ' + e.target.dataset.hash);
+				}
+
+				l1.refresh();
+			};
+		</script>
+		
+	</body>
+</html>

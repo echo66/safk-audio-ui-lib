@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="linear-scale.js"></script>
+		<script type="text/javascript" src="layers/breakpoints-layer.js"></script>
+		<script type="text/javascript" src="layers/segments-layer.js"></script>
+
+		<style type="text/css">
+
+			layer {
+				overflow: hidden; 
+				top: 0px; 
+				position: absolute; 
+				height: 30px; 
+				width: 500px; 
+				background-color: none;
+			}
+
+			segment {
+				position: absolute; 
+				width: 60px; 
+				height: 30px; 
+				/*background-color: green;*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<ttrack id="track1">
+		</ttrack>
+
+		<script type="text/javascript">
+			var data1 = [
+				{ 
+					id: 0, 
+					time: 0, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 1, 
+					time: 2, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 2, 
+					time: 4, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 3, 
+					time: 6, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 4, 
+					time: 8, 
+					value: Math.random()
+				}, 
+			];
+
+			var l1 = new BreakpointsLayer({});
+
+			track1.appendChild(l1.layerDomEl);
+
+			l1.get_datum = (hash) => {
+				for (let i=0; i<data1.length; i++) 
+					if ((data1[i].id + "") === hash)
+						return data1[i];
+			};
+
+			l1.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			l1.accessor('color', () => { return 'red'; });
+
+			l1.accessor('radius', () => { return 4; });
+
+			data1.forEach((datum) => l1.set(datum));
+
+
+			var data2 = [
+				{ 
+					id: 0, 
+					time: 0, 
+					duration: 1, 
+					backgroundColor: 'cyan', 
+					lowValue: 0.5, 
+					highValue: 0.6, 
+					// innerHTML: '<span>Bruno</span>'
+				}, 
+				{ 
+					id: 1, 
+					time: 2, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+				{ 
+					id: 2, 
+					time: 4, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+				{ 
+					id: 3, 
+					time: 6, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+				{ 
+					id: 4, 
+					time: 8, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+			];
+
+			var l2 = new SegmentsLayer({});
+
+			track1.appendChild(l2.layerDomEl);
+
+			l2.get_datum = (hash) => {
+				for (let i=0; i<data2.length; i++) 
+					if ((data2[i].id + "") === hash)
+						return data2[i];
+			};
+
+			l2.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			data2.forEach((datum) => l2.set(datum));
+
+		</script>
+		
+	</body>
+</html>
