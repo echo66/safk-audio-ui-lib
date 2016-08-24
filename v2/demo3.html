@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/markers-layer-v2.js"></script>
+
+		<style type="text/css">
+
+			layer {
+				overflow: hidden; 
+				top: 0px; 
+				position: absolute; 
+				height: 30px; 
+				width: 500px; 
+				background-color: none;
+			}
+
+			segment {
+				position: absolute; 
+				width: 60px; 
+				height: 30px; 
+				/*background-color: green;*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="track1">
+		</div>
+		<div>
+			MINHA
+		</div>
+
+		<script type="text/javascript">
+			var content = document.createElement('div');
+			content.style.left = '2px';
+			content.style.position = 'absolute';
+			content.innerHTML = '<span>m1</span>';
+
+			var data = [
+				{ 
+					id: 0, 
+					time: 0, 
+					value: Math.random(), 
+					innerHTML: content
+				}, 
+				{ 
+					id: 1, 
+					time: 2, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 2, 
+					time: 4, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 3, 
+					time: 6, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 4, 
+					time: 8, 
+					value: Math.random()
+				}, 
+			];
+
+			var l1 = new MarkersLayer({});
+
+			track1.appendChild(l1.layerDomEl);
+
+			l1.get_datum = (hash) => {
+				for (let i=0; i<data.length; i++) 
+					if ((data[i].id + "") === hash)
+						return data[i];
+			};
+
+			l1.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			data.forEach((datum) => l1.set(datum));
+
+
+		</script>
+		
+	</body>
+</html>

@@ -3,7 +3,8 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<script type="text/javascript" src="linear-scale.js"></script>
-		<script type="text/javascript" src="layers/segments-layer.js"></script>
+		<script type="text/javascript" src="layers/layer.js"></script>
+		<script type="text/javascript" src="layers/segments-layer-v2.js"></script>
 
 		<style type="text/css">
 
@@ -79,7 +80,6 @@
 				var numPixels  = canvas.width;
 
 				var pixelStep = numPixels / numSamples;
-
 
 				ctx.moveTo(0, 0);
 				ctx.beginPath();
@@ -178,14 +178,28 @@
 
 					l1._.accessors.innerHTML = (d, outerHTML) => {
 						if (!d.image || d.render) {
+							var content = document.createElement('div');
+							var overlay = document.createElement('div');
 							canvas.style.pointerEvents = 'none';
 							render_waveform(d, canvas, outerHTML);
 							d.image = convert_canvas_to_image(canvas);
-							d.image.width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2))
-							d.image.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2))
 							d.render = false;
+							d.content = content;
+							d.overlay = overlay;
+							content.appendChild(d.overlay);
+							content.appendChild(d.image);
 						}
-						return d.image;
+						d.image.width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
+						d.image.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
+						d.overlay.style.position = "absolute";
+						d.overlay.style.left = "0";
+						d.overlay.style.top = "0";
+						d.overlay.style.width = "100%";
+						d.overlay.style.height = "100%";
+						d.overlay.style.background = "rgba(255,255,255,0)";
+						d.content.style.width = outerHTML.style.width;
+						d.content.style.height = outerHTML.style.height;
+						return d.content;
 					};
 
 					data.forEach((datum) => l1.set(datum));
@@ -298,15 +312,23 @@
 					selectedDatums.clear();
 					console.log('unselected all');
 				} 
-				let hash = e.target.dataset.hash;
-				let datum = l1.get_datum(hash);
+				var datum;
+
+				var el = e.target;
+				if (el.tagName.toLowerCase() === 'layer') 
+					return;
+
+				while (el.tagName.toLowerCase() !== 'segment') {
+					el = el.parentElement;
+				}
+
+				datum = el.datum;
 
 				if (datum) {
 					selectedDatums.add(datum);
-					console.log('selected ' + e.target.dataset.hash);
 				}
 
-				l1.refresh();
+				l1.update();
 			};
 		</script>
 		

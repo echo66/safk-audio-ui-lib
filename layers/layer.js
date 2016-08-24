@@ -19,6 +19,7 @@ class Layer {
 		this._ = {};
 		params = params || {};
 
+		this._.layerTagName = params.layerTagName;
 		this._.layerElementTagName = params.layerElementTagName;
 		this._.layerElementDatumHashAttribute = params.layerElementDatumHashAttribute;
 
@@ -38,7 +39,7 @@ class Layer {
 				obj[prop] = value;
 				that._.timeToPixel.domain(obj);
 				if (that.autoRefresh) 
-					that.refresh();
+					that.update();
 			}
 		});
 		this._.valueDomainProxy = new Proxy(this._.valueDomain, {
@@ -49,14 +50,14 @@ class Layer {
 				obj[prop] = value;
 				that._.valueToPixel.domain(obj);
 				if (that.autoRefresh) 
-					that.refresh();
+					that.update();
 			}
 		});
 
 		this._.timeToPixel.domain(this._.timeDomain).range([0, layerWidth]);
 		this._.valueToPixel.domain(this._.valueDomain).range([0, layerHeight]);
 
-		this._.$el = document.createElement('layer');
+		this._.$el = document.createElement(this._.layerTagName);
 		// this._.$el.style.position = "absolute";
 		this._.$el.style.overflow = "hidden";
 		this._.$el.style.height = layerHeight + "px";
@@ -64,7 +65,7 @@ class Layer {
 
 		// params.parent.appendChild(this._.$el);
 
-		this._.datumHashToDOM = new Map();
+		// this._.datumHashToDOM = new Map();
 
 		this._.accessors = {};
 
@@ -105,7 +106,7 @@ class Layer {
 	}
 
 	clear() {
-		this._.datumHashToDOM.clear();
+		// this._.datumHashToDOM.clear();
 		let layerElements = this._.$el.querySelectorAll(this._.layerElementTagName);
 		for (let i=0; i<layerElements.length; i++) {
 			let layerElement = layerElements[i];
@@ -115,10 +116,10 @@ class Layer {
 
 	refill(iterator) {
 		this.clear();
-		this.refresh(iterator);
+		this.update(iterator);
 	}
 
-	refresh(iterator) {
+	update(iterator) {
 		iterator = iterator || this.defaultIterator;
 		if (iterator) {
 			iterator.start(this);
@@ -145,20 +146,22 @@ class Layer {
 
 	remove(datum) {
 		let hash = this.get_hash(datum);
-		var domEl = this._.datumHashToDOM.get(hash);
-		if (domEl) {
-			this._remove(domEl, hash);
+		// var $el = this._.datumHashToDOM.get(hash);
+		let $el = this.get_element(hash);
+		if ($el) {
+			this._remove($el, hash);
 		} 
 	}
 
-	_remove(domEl, hash) {
-		// domEl.remove();
-		delete domEl.dataset.hash;
-		domEl.style.display = "none";
-		domEl.setAttribute('unused', true);
-		delete domEl.datum;
-		this._.datumHashToDOM.delete(hash);
-		this._.unusedDomElsList.push(domEl);
+	_remove($el, hash) {
+		// $el.remove();
+		$el.removeAttribute(this._.layerElementDatumHashAttribute);
+		$el.style.display = "none";
+		$el.setAttribute('unused', true);
+		// delete $el.datum;
+		this.unassociate_element_to($el, hash);
+		// this._.datumHashToDOM.delete(hash);
+		this._.unusedDomElsList.push($el);
 	}
 
 	get_hash(datum) {
@@ -169,12 +172,33 @@ class Layer {
 		throw new Error('not implemented');
 	}
 
+	/*
+	 *	Associate a DOM (or, in specific cases, the rendered object) to a datum hash.
+	 */
+	associate_element_to($el, hash) {
+		throw new Error('not implemented');
+	}
+
+	/*
+	 * Return the DOM (or, in specific cases, the rendered object) associated with the datum hash.
+	 */
+	get_element(hash) {
+		throw new Error('not implemented');
+	}
+
+	/*
+	 * Remove the DOM (or, in specific cases, the rendered object) associated with the datum hash.
+	 */
+	unassociate_element_to($el, hash) {
+		throw new Error('not implemented');
+	}
+
 	accessor(id, fn) {
 		if (fn !== undefined) {
 			this._.accessors[id] = fn;
 
 			if (this.autoRefresh) 
-				this.refresh();
+				this.update();
 		}
 
 		return this._.accessors[id];
@@ -207,12 +231,12 @@ class Layer {
 		this._.$el.style.width = layerWidth + "px";
 
 		if (this.autoRefresh)
-			this.refresh();
+			this.update();
 	}
 
 	get height() {
 		// TODO: watch out for the values with no 'px' at the end!
-		return Number(this._.$el.height.width.substring(0, this._.$el.style.height.length-2));
+		return Number(this._.$el.style.height.substring(0, this._.$el.style.height.length-2));
 	}
 
 	set height(v) {
@@ -228,7 +252,7 @@ class Layer {
 		this._.$el.style.height = layerHeight + "px";
 
 		if (this.autoRefresh)
-			this.refresh();
+			this.update();
 	}
 
 	get timeDomain() {
@@ -245,7 +269,7 @@ class Layer {
 		this._.timeToPixel.domain(this._.timeDomain);
 
 		if (this.autoRefresh)
-			this.refresh();
+			this.update();
 	}
 
 	get valueDomain() {
@@ -262,7 +286,7 @@ class Layer {
 		this._.valueToPixel.domain(this._.valueDomain);
 
 		if (this.autoRefresh)
-			this.refresh();
+			this.update();
 	}
 
 	get layerDomEl() {

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
+
+		<style type="text/css">
+
+			layer {
+				overflow: hidden; 
+				top: 0px; 
+				position: absolute; 
+				height: 30px; 
+				width: 500px; 
+				background-color: none;
+			}
+
+			segment {
+				position: absolute; 
+				width: 60px; 
+				height: 30px; 
+				/*background-color: green;*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<ttrack id="track1">
+		</ttrack>
+
+		<script type="text/javascript">
+			var data = [
+				{ 
+					id: 0, 
+					time: 0, 
+					duration: 1, 
+					backgroundColor: 'cyan', 
+					lowValue: 0.5, 
+					highValue: 0.6
+				}, 
+				{ 
+					id: 1, 
+					time: 2, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+				{ 
+					id: 2, 
+					time: 4, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+				{ 
+					id: 3, 
+					time: 6, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+				{ 
+					id: 4, 
+					time: 8, 
+					duration: 1, 
+					backgroundColor: 'cyan' 
+				}, 
+			];
+
+			var dataIt = {
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			dataIt.start = function(params) {
+				this.index = 0;
+			}.bind(dataIt);
+			dataIt.next = function() {
+				if (this.index >= data.length) {
+					this.entry.value = undefined; 
+					this.entry.done = true;
+				} else {
+					this.entry.value = data[this.index++];
+					this.entry.done = false;
+				}
+				return this.entry;
+			}.bind(dataIt);
+			dataIt.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(dataIt);
+			
+
+			var l1 = new SegmentsLayer({});
+
+			track1.appendChild(l1.layerDomEl);
+
+			l1.get_datum = (hash) => {
+				for (let i=0; i<data.length; i++) 
+					if ((data[i].id + "") === hash)
+						return data[i];
+			};
+
+			l1.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			data.forEach((datum) => l1.set(datum));
+
+
+
+
+			let lastEventType = undefined;
+			let lastCoords = { x: undefined, y: undefined };
+			let selectedDatums = new Set();
+
+			l1._.accessors.color = (d, elementName) => {
+				switch (elementName) {
+					case 'background': 
+						if (selectedDatums.has(d))
+							return 'red';
+						else 
+							return 'cyan';
+					case 'right-handler': 
+					case 'left-handler': 
+					case 'bottom-handler': 
+					case 'top-handler': 
+						return (d.handlerColor !== undefined)? d.handlerColor : 'blue';
+				}
+			};
+
+			l1._.accessors.width = (d, elementName) => {
+				if (selectedDatums.has(d)) 
+					return 5;
+				else 
+					return 2;
+			};
+
+			l1._.accessors.zIndex = (d, elementName) => {
+				switch (elementName) {
+					case 'segment': 
+						if (selectedDatums.has(d))
+							return 2;
+						else 
+							return 1
+					case 'right-handler': 
+					case 'left-handler': 
+					case 'bottom-handler': 
+					case 'top-handler': 
+					case 'background': 
+					case 'content': 
+						return (d.zIndex !== undefined)? d.zIndex : 1;
+				}
+			};
+
+			let mousedown = (e) => {
+				lastEventType = e.type;
+				lastCoords.x = e.clientX;
+				lastCoords.y = e.clientY;
+
+				selectioncheck(e);
+
+				l1.on('mousemove', drag);
+				l1.on('mouseup', dragend);
+
+				console.log('mousedown');
+			};
+
+			let drag = (e) => {
+				if (lastEventType === 'mousemove')
+					console.log('drag');
+				else if (lastEventType === 'mousedown')
+					console.log('start drag');
+				lastEventType = e.type;
+
+				l1.off('mousedown', mousedown);
+
+				selectedDatums.forEach((datum) => {
+					let dx = e.clientX - lastCoords.x;
+					let px = l1._.timeToPixel(datum.time);
+					datum.time = l1._.timeToPixel.invert(px + dx);
+					l1.set(datum);
+				});
+
+				lastCoords.x = e.clientX;
+				lastCoords.y = e.clientY;
+			};
+
+			let dragend = (e) => {
+				lastCoords.x = e.clientX;
+				lastCoords.y = e.clientY;
+				l1.off('mousemove', drag);
+				l1.off('mouseup', dragend);
+				console.log('end drag');
+				lastEventType = e.type;
+
+				l1.on('mousedown', mousedown);
+				// targetDatum = undefined;
+			};
+
+			let selectioncheck = (e) => {
+				if (!e.shiftKey) {
+					selectedDatums.clear();
+					console.log('unselected all');
+				} 
+				var datum, 
+					tagName = e.target.tagName.toLowerCase();
+
+				if (tagName === 'segment') {
+					datum = e.target.datum;
+				} else {
+					datum = e.target.parentElement.datum;
+				}
+
+				if (datum) {
+					selectedDatums.add(datum);
+				}
+
+				l1.update();
+			};
+
+			l1.on('mousedown', mousedown);
+
+			// l1.on('mouseover', (e) => {
+			// 	console.log('mouseover');
+			// 	console.log(e.target);
+			// });
+
+			// l1.on('click', (e) => {
+			// 	selectioncheck(e);
+
+			// 	console.log('click');
+			// })
+		</script>
+		
+	</body>
+</html>

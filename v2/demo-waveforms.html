@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/waveforms-layer-v2.js"></script>
+
+		<style type="text/css">
+
+			layer {
+				overflow: hidden; 
+				top: 0px; 
+				position: absolute; 
+				height: 30px; 
+				width: 500px; 
+				background-color: none;
+			}
+
+			segment {
+				position: absolute; 
+				width: 60px; 
+				height: 30px; 
+				/*background-color: green;*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<ttrack id="track1">
+		</ttrack>
+
+		<script type="text/javascript">
+			function load_sample(audioCtx, url, callback) {
+				var request = new XMLHttpRequest();
+				request.open('GET', url, true);
+				request.responseType = 'arraybuffer';
+					request.onload = function() {
+					audioCtx.decodeAudioData(request.response, function(decodedData) {
+						callback(decodedData);
+					});
+				};
+				request.send();
+			}
+
+			var data = [
+				{ 
+					id: 0, 
+					time: 0, 
+					duration: 10, 
+					bufferStart: 200000, 
+					bufferEnd: 300000, 
+					text: 'w1'
+				}
+			];
+
+			var dataIt = {
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			dataIt.start = function(params) {
+				this.index = 0;
+			}.bind(dataIt);
+			dataIt.next = function() {
+				if (this.index >= data.length) {
+					this.entry.value = undefined; 
+					this.entry.done = true;
+				} else {
+					this.entry.value = data[this.index++];
+					this.entry.done = false;
+				}
+				return this.entry;
+			}.bind(dataIt);
+			dataIt.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(dataIt);
+			
+
+			var l1 = new WaveformsLayer({});
+
+			track1.appendChild(l1.layerDomEl);
+
+			l1.get_datum = (hash) => {
+				for (let i=0; i<data.length; i++) 
+					if ((data[i].id + "") === hash)
+						return data[i];
+			};
+
+			l1.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			l1.accessor('channelData', (d, channelNumber) => {
+				return d.audioBuffer.getChannelData(channelNumber);
+			});
+
+			l1.accessor('color', (d, elementName) => {
+				switch (elementName) {
+					case 'header': 
+						return 'cyan';
+					case 'right-handler': 
+					case 'left-handler': 
+					case 'bottom-handler': 
+					case 'top-handler':  
+						return 'blue';
+					case 'waveform': 
+						return 'black';
+					case 'segment': 
+						return 'rgb(255,255,0)';
+				}
+			});
+
+			l1.accessor('width', (d, elementName) => {
+				switch (elementName) {
+					case 'right-handler': 
+					case 'left-handler': 
+					case 'bottom-handler': 
+					case 'top-handler': 
+						return 1;
+					case 'waveform': 
+						return 1;
+				}
+			});
+
+			l1.accessor('text', (d) => {
+				return d.text;
+			});
+
+			l1.accessor('zIndex', (d, elementName) => {
+				switch (elementName) {
+					case 'right-handler':
+					case 'left-handler':
+					case 'bottom-handler':
+					case 'top-handler':
+						return 3;
+					case 'header':
+						return 2;
+					case 'waveform':
+						return 1;
+				}
+			});
+
+			l1.accessor('opacity', (d, elementName) => {
+				if (elementName === 'header') 
+					return 0.5;
+				else 
+					return 1;
+			});
+
+			var audioCtx = new AudioContext();
+			load_sample(audioCtx, 'http://localhost/OLA-TS.js/07.%20Around%20The%20World.mp3', 
+				(decodedData) => {
+					let audioBuffer = decodedData;
+
+					data.forEach((d) => d.audioBuffer = audioBuffer);
+
+					data.forEach((datum) => l1.set(datum));
+				});
+
+			
+		</script>
+		
+	</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/paths-layer-v2.js"></script>
+		<script type="text/javascript" src="../layers/points-layer-v2.js"></script>
+
+		<style type="text/css">
+
+			layer {
+				overflow: hidden; 
+				top: 0px; 
+				position: absolute; 
+				height: 30px; 
+				width: 500px; 
+				background-color: none;
+			}
+
+			segment {
+				position: absolute; 
+				width: 60px; 
+				height: 30px; 
+				/*background-color: green;*/
+			}
+		</style>
+	</head>
+
+	<body>
+		<ttrack id="track1">
+		</ttrack>
+
+		<script type="text/javascript">
+			var data = [
+				{ 
+					id: 0, 
+					time: 0, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 1, 
+					time: 2, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 2, 
+					time: 4, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 3, 
+					time: 6, 
+					value: Math.random()
+				}, 
+				{ 
+					id: 4, 
+					time: 8, 
+					value: Math.random()
+				}, 
+			];
+
+			var dataIt = {
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			dataIt.start = function(params) {
+				this.index = 0;
+			}.bind(dataIt);
+			dataIt.next = function() {
+				if (this.index >= data.length) {
+					this.entry.value = undefined; 
+					this.entry.done = true;
+				} else {
+					this.entry.value = data[this.index++];
+					this.entry.done = false;
+				}
+				return this.entry;
+			}.bind(dataIt);
+			dataIt.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(dataIt);
+
+			var l1 = new PathsLayer({});
+			var l2 = new PointsLayer({});
+
+			l2.get_datum = (hash) => {
+				for (let i=0; i<data.length; i++) 
+					if ((data[i].id + "") === hash)
+						return data[i];
+			};
+
+			l2.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			data.forEach((datum) => l2.set(datum));
+
+			track1.appendChild(l1.layerDomEl);
+			track1.appendChild(l2.layerDomEl);
+
+			l1.get_datum = (hash) => {
+				return 
+			};
+
+			l1.get_hash = (datum) => {
+				return "path1";
+			};
+
+			l1.set(dataIt);
+
+
+		</script>
+		
+	</body>
+</html>
