@@ -5,10 +5,11 @@
 		<script type="text/javascript" src="../linear-scale.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/edit-controller.js"></script>
 
 		<style type="text/css">
 
-			layer {
+			/*layer {
 				overflow: hidden; 
 				top: 0px; 
 				position: absolute; 
@@ -22,13 +23,13 @@
 				width: 60px; 
 				height: 30px; 
 				/*background-color: green;*/
-			}
+			}*/
 		</style>
 	</head>
 
 	<body>
-		<ttrack id="track1">
-		</ttrack>
+		<div id="track1" style="position: relative; height: 100px; width: 500px;">
+		</div>
 
 		<script type="text/javascript">
 			var data = [
@@ -66,6 +67,18 @@
 				}, 
 			];
 
+			// for (var i=0; i<100; i++) {
+			// 	let c = document.createElement('span');
+			// 	c.innerHTML = "" + i;
+			// 	data.push({
+			// 		id: i, 
+			// 		time: i * 2, 
+			// 		duration: 1, 
+			// 		backgroundColor: 'cyan', 
+			// 		innerHTML: c
+			// 	})
+			// }
+
 			var dataIt = {
 				index: undefined, 
 				entry: { value: undefined, done: undefined }
@@ -90,7 +103,9 @@
 			}.bind(dataIt);
 			
 
-			var l1 = new SegmentsLayer({});
+			var l1 = new SegmentsLayer({
+				width: 1000, height: 100
+			});
 
 			track1.appendChild(l1.layerDomEl);
 
@@ -106,17 +121,12 @@
 
 			data.forEach((datum) => l1.set(datum));
 
-
-
-
-			let lastEventType = undefined;
-			let lastCoords = { x: undefined, y: undefined };
-			let selectedDatums = new Set();
+			var editController = new EditController({ layer: l1 });
 
 			l1._.accessors.color = (d, elementName) => {
 				switch (elementName) {
 					case 'background': 
-						if (selectedDatums.has(d))
+						if (editController.selectedData.has(d))
 							return 'red';
 						else 
 							return 'cyan';
@@ -129,7 +139,7 @@
 			};
 
 			l1._.accessors.width = (d, elementName) => {
-				if (selectedDatums.has(d)) 
+				if (editController.selectedData.has(d)) 
 					return 5;
 				else 
 					return 2;
@@ -138,7 +148,7 @@
 			l1._.accessors.zIndex = (d, elementName) => {
 				switch (elementName) {
 					case 'segment': 
-						if (selectedDatums.has(d))
+						if (editController.selectedData.has(d))
 							return 2;
 						else 
 							return 1
@@ -152,84 +162,14 @@
 				}
 			};
 
-			let mousedown = (e) => {
-				lastEventType = e.type;
-				lastCoords.x = e.clientX;
-				lastCoords.y = e.clientY;
+			var back = document.createElement('button');
+			var forw = document.createElement('button');
 
-				selectioncheck(e);
+			back.innerHTML = "-0.1";
+			forw.innerHTML = "+0.1";
 
-				l1.on('mousemove', drag);
-				l1.on('mouseup', dragend);
-
-				console.log('mousedown');
-			};
-
-			let drag = (e) => {
-				if (lastEventType === 'mousemove')
-					console.log('drag');
-				else if (lastEventType === 'mousedown')
-					console.log('start drag');
-				lastEventType = e.type;
-
-				l1.off('mousedown', mousedown);
-
-				selectedDatums.forEach((datum) => {
-					let dx = e.clientX - lastCoords.x;
-					let px = l1._.timeToPixel(datum.time);
-					datum.time = l1._.timeToPixel.invert(px + dx);
-					l1.set(datum);
-				});
-
-				lastCoords.x = e.clientX;
-				lastCoords.y = e.clientY;
-			};
-
-			let dragend = (e) => {
-				lastCoords.x = e.clientX;
-				lastCoords.y = e.clientY;
-				l1.off('mousemove', drag);
-				l1.off('mouseup', dragend);
-				console.log('end drag');
-				lastEventType = e.type;
-
-				l1.on('mousedown', mousedown);
-				// targetDatum = undefined;
-			};
-
-			let selectioncheck = (e) => {
-				if (!e.shiftKey) {
-					selectedDatums.clear();
-					console.log('unselected all');
-				} 
-				var datum, 
-					tagName = e.target.tagName.toLowerCase();
-
-				if (tagName === 'segment') {
-					datum = e.target.datum;
-				} else {
-					datum = e.target.parentElement.datum;
-				}
-
-				if (datum) {
-					selectedDatums.add(datum);
-				}
-
-				l1.update();
-			};
-
-			l1.on('mousedown', mousedown);
-
-			// l1.on('mouseover', (e) => {
-			// 	console.log('mouseover');
-			// 	console.log(e.target);
-			// });
-
-			// l1.on('click', (e) => {
-			// 	selectioncheck(e);
-
-			// 	console.log('click');
-			// })
+			document.body.appendChild(back);
+			document.body.appendChild(forw);
 		</script>
 		
 	</body>

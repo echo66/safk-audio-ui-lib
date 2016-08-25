@@ -13,8 +13,27 @@ class PointsLayer extends Layer {
 			valueDomain: params.valueDomain || [0, 1], 
 			layerTagName: 'layer', 
 			layerElementTagName: 'g', 
-			layerElementDatumHashAttribute: 'data-hash'
+			layerElementDatumHashAttribute: 'data-hash', 
 		});
+
+		this._.$pointsSVG = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+
+		this._.layerElementsParent = this._.$pointsSVG;
+
+		this._.$el.children[0].appendChild(this._.$pointsSVG);
+
+		this._.$pointsSVG.setAttributeNS(null, 'width', this.width);
+		this._.$pointsSVG.setAttributeNS(null, 'height', this.height);
+		this._.$pointsSVG.style.position = "absolute";
+		this._.$pointsSVG.style.zIndex = 1;
+		this._.$pointsSVG.style.transform = "scale(1,-1)";
+
+		this._.onchange = (property, newValue) => {
+			if (property === 'width' || property === 'height') {
+				this._.$pointsSVG.setAttributeNS(null, 'width', this.width);
+				this._.$pointsSVG.setAttributeNS(null, 'height', this.height);
+			}
+		};
 
 		// DEFINE ACCESSORS
 		{
@@ -43,9 +62,13 @@ class PointsLayer extends Layer {
 				return 0;
 			});
 			this.accessor('fontFamily', (d) => { 
+				/*
+				 */
 				return 'Verdana';
 			});
 			this.accessor('fontSize', (d) => { 
+				/*
+				 */
 				return 5;
 			});
 
@@ -69,16 +92,6 @@ class PointsLayer extends Layer {
 			});
 		}
 
-		this._.pointsSVG = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-
-		this._.$el.appendChild(this._.pointsSVG);
-
-		this._.pointsSVG.setAttributeNS(null, 'width', '100%');
-		this._.pointsSVG.setAttributeNS(null, 'height', '100%');
-		this._.pointsSVG.style.position = "absolute";
-		this._.pointsSVG.style.zIndex = 1;
-		this._.pointsSVG.style.transform = "scale(1,-1)";
-
 	}
 
 	_configure_circle(circle, datum) {
@@ -87,7 +100,7 @@ class PointsLayer extends Layer {
 		circle.setAttributeNS(null, 'r', this._.accessors.radius(datum));
 		circle.style.fill = this._.accessors.color(datum, 'point');
 		circle.style.opacity = this._.accessors.opacity(datum, 'point');
-		circle.style.display = (this._.accessors.visible(datum, 'point'))? 'inline' : 'none';
+		circle.style.display = (this._.accessors.visible(datum, 'point'))? 'block' : 'none';
 		circle.style.zIndex = this._.accessors.zIndex(datum, 'point');
 	}
 
@@ -95,7 +108,7 @@ class PointsLayer extends Layer {
 		group.setAttributeNS(null, 'transform', 'translate(' + 
 													this._.timeToPixel(this._.accessors.time(datum)) + ' ' + 
 													this._.valueToPixel(this._.accessors.value(datum)) + ') ' + 
-													'scale(1, -1)');
+													'scale(1,-1)');
 	}
 
 	_configure_text(text, datum) {
@@ -105,73 +118,41 @@ class PointsLayer extends Layer {
 		text.setAttributeNS(null, 'font-size', this._.accessors.fontSize(datum));
 		text.setAttributeNS(null, 'font-family', this._.accessors.fontFamily(datum));
 		text.style.opacity = this._.accessors.opacity(datum, 'text');
-		text.style.display = (this._.accessors.visible(datum, 'text'))? 'inline' : 'none';
+		text.style.display = (this._.accessors.visible(datum, 'text'))? 'block' : 'none';
 		text.innerHTML = this._.accessors.text(datum);
 
 		return text;
 	}
 
-	set(datum) {
+	set(datum, $group) {
+
+		$group = super.set(datum, $group);
+
+		this._configure_group($group, datum);
+
+		this._configure_text($group.safk.text, datum);
+
+		this._configure_circle($group.safk.circle, datum);
+
+		return $group;
+	}
+
+	allocate_element(datum) {
 		let hash = this.get_hash(datum);
-		var group, circle, text;
+
+		let $group = this.get_element(hash) || 
+					this._.unusedElsList.pop() || 
+					document.createElementNS("http://www.w3.org/2000/svg", this._.layerElementTagName);
+
+		this.associate_element_to($group, this.get_hash(datum));
+
+		$group.safk = $group.safk || {};
+
+		if (!$group.safk.circle) $group.appendChild($group.safk.circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle'));
 		
-		group = this.get_element(hash);
+		if (!$group.safk.text) $group.appendChild($group.safk.text = document.createElementNS("http://www.w3.org/2000/svg", 'text'));
 
-		if (group) {
-
-			circle = group.querySelector('circle');
-			text  = group.querySelector('text');
-
-		} else if (group = this._.unusedDomElsList.pop()) {
-
-			circle = group.querySelector('circle');
-			text  = group.querySelector('text');
-
-			this.associate_element_to(group, hash);
-
-		} else {
-			group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
-			circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
-			text = document.createElementNS("http://www.w3.org/2000/svg", 'text');
-
-			group.appendChild(circle);
-			group.appendChild(text);
-			this._.pointsSVG.appendChild(group);
-
-			this.associate_element_to(group, hash);
-		}
-
-		this._configure_group(group, datum);
-
-		this._configure_text(text, datum);
-
-		this._configure_circle(circle, datum);
-		
-
-		return group;
-	}
-
-	/*
-	 *	Associate a DOM (or, in specific cases, the rendered object) to a datum hash.
-	 */
-	associate_element_to($el, hash) {
-		$el.setAttribute('data-hash', hash);
-		$el.datum = this.get_datum(hash);	
-	}
-
-	/*
-	 * Return the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	get_element(hash) {
-		return this._.pointsSVG.querySelector('g[data-hash="' + hash + '"]');
-	}
-
-	/*
-	 * Remove the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	unassociate_element_to($el, hash) {
-		$el.removeAttribute('data-hash');
-		delete $el.datum;
+		return $group;
 	}
 
 }

@@ -5,29 +5,10 @@
 		<script type="text/javascript" src="../linear-scale.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/points-layer-v2.js"></script>
-
-		<style type="text/css">
-
-			layer {
-				overflow: hidden; 
-				top: 0px; 
-				position: absolute; 
-				height: 30px; 
-				width: 500px; 
-				background-color: none;
-			}
-
-			segment {
-				position: absolute; 
-				width: 60px; 
-				height: 30px; 
-				/*background-color: green;*/
-			}
-		</style>
 	</head>
 
 	<body>
-		<ttrack id="track1">
+		<ttrack id="track1" style="position: relative; height: 100px; width: 500px;">
 		</ttrack>
 
 		<script type="text/javascript">
@@ -59,7 +40,9 @@
 				}, 
 			];
 
-			var l1 = new PointsLayer({});
+			var l1 = new PointsLayer({
+				height: 100, width: 500
+			});
 
 			track1.appendChild(l1.layerDomEl);
 

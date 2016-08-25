@@ -16,6 +16,25 @@ class PathsLayer extends Layer {
 			layerElementDatumHashAttribute: 'data-hash'
 		});
 
+		this._.$pathsSVG = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+
+		this._.layerElementsParent = this._.$pathsSVG;
+
+		this._.$el.children[0].appendChild(this._.$pathsSVG);
+
+		this._.$pathsSVG.setAttributeNS(null, 'width', this.width);
+		this._.$pathsSVG.setAttributeNS(null, 'height', this.height);
+		this._.$pathsSVG.style.position = "absolute";
+		this._.$pathsSVG.style.zIndex = 1;
+		this._.$pathsSVG.style.transform = "scale(1,-1)";
+
+		this._.onchange = (property, newValue) => {
+			if (property === 'width' || property === 'height') {
+				this._.$pathsSVG.setAttributeNS(null, 'width', this.width);
+				this._.$pathsSVG.setAttributeNS(null, 'height', this.height);
+			}
+		};
+
 		this.accessor('time', (d) => {
 			return d.time;
 		});
@@ -29,49 +48,18 @@ class PathsLayer extends Layer {
 			return d.width || 1;
 		});
 
-		this._.pathsSVG = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-
-		this._.$el.appendChild(this._.pathsSVG);
-
-		this._.pathsSVG.setAttributeNS(null, 'width', '100%');
-		this._.pathsSVG.setAttributeNS(null, 'height', '100%');
-		this._.pathsSVG.style.position = "absolute";
-		this._.pathsSVG.style.zIndex = 1;
-		this._.pathsSVG.style.transform = "scale(1,-1)";
-
 	}
 
-	set(datum) {
-		let hash = this.get_hash(datum);
-		var path, d = "";
-		
-		path = this.get_element(hash);
+	set(datum, $path) {
+		$path = super.set(datum, $path);
 
-		if (path) {
-
-			// N/A
-
-		} else if (path = this._.unusedDomElsList.pop()) {
-
-			this.associate_element_to(path, hash);
-
-		} else {
-
-			path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-
-			this._.pathsSVG.appendChild(path);
-
-			this.associate_element_to(path, hash);
-
-		}
-
-		path.setAttributeNS(null, 'stroke', this._.accessors.color(datum));
-		path.setAttributeNS(null, 'stroke-width', this._.accessors.width(datum));
-		path.setAttributeNS(null, 'fill', 'none');
+		$path.setAttributeNS(null, 'stroke', this._.accessors.color(datum));
+		$path.setAttributeNS(null, 'stroke-width', this._.accessors.width(datum));
+		$path.setAttributeNS(null, 'fill', 'none');
 
 		datum.start();
 		let entry = datum.next();
-		let x, y;
+		let x, y, d = "";
 		if (!entry.done) {
 			x = this._.timeToPixel(this._.accessors.time(entry.value));
 			y = this._.valueToPixel(this._.accessors.value(entry.value));
@@ -87,32 +75,23 @@ class PathsLayer extends Layer {
 		}
 		datum.stop();
 
-		path.setAttributeNS(null, 'd', d);
+		$path.setAttributeNS(null, 'd', d);
 
-		return path;
+		return $path;
 	}
 
-	/*
-	 *	Associate a DOM (or, in specific cases, the rendered object) to a datum hash.
-	 */
-	associate_element_to($el, hash) {
-		$el.setAttribute('data-hash', hash);
-		$el.datum = this.get_datum(hash);
-	}
+	allocate_element(datum) {
+		let hash = this.get_hash(datum);
 
-	/*
-	 * Return the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	get_element(hash) {
-		return this._.pathsSVG.querySelector('path[data-hash="' + hash + '"]');
-	}
+		let $path = this.get_element(hash) || 
+					this._.unusedElsList.pop() || 
+					document.createElementNS("http://www.w3.org/2000/svg", this._.layerElementTagName);
 
-	/*
-	 * Remove the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	unassociate_element_to($el, hash) {
-		$el.removeAttribute('data-hash');
-		delete $el.datum;
+		this.associate_element_to($path, this.get_hash(datum));
+
+		$path.safk = $path.safk || {};
+
+		return $path;
 	}
 
 }

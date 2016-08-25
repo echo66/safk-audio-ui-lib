@@ -28,7 +28,7 @@
 	</head>
 
 	<body>
-		<ttrack id="track1">
+		<ttrack id="track1" style="position: relative; height: 100px; width: 500px;">
 		</ttrack>
 
 		<script type="text/javascript">
@@ -60,14 +60,14 @@
 				}, 
 			];
 
-			var dataIt = {
+			var path1 = {
 				index: undefined, 
 				entry: { value: undefined, done: undefined }
 			};
-			dataIt.start = function(params) {
+			path1.start = function(params) {
 				this.index = 0;
-			}.bind(dataIt);
-			dataIt.next = function() {
+			}.bind(path1);
+			path1.next = function() {
 				if (this.index >= data.length) {
 					this.entry.value = undefined; 
 					this.entry.done = true;
@@ -76,12 +76,39 @@
 					this.entry.done = false;
 				}
 				return this.entry;
-			}.bind(dataIt);
-			dataIt.stop = function() {
+			}.bind(path1);
+			path1.stop = function() {
 				this.index = undefined;
 				this.entry.value = undefined;
 				this.entry.done = undefined;
-			}.bind(dataIt);
+			}.bind(path1);
+
+			var path2 = {
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			path2.start = function(params) {
+				this.index = 0;
+			}.bind(path2);
+			path2.next = function() {
+				if (this.index >= data.length) {
+					this.entry.value = undefined; 
+					this.entry.done = true;
+				} else {
+					let curDatum = data[this.index++];
+					this.entry.value = {
+						time: curDatum.time + 0.2, 
+						value: curDatum.value
+					};
+					this.entry.done = false;
+				}
+				return this.entry;
+			}.bind(path2);
+			path2.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(path2);
 
 			var l1 = new PathsLayer({});
 			var l2 = new PointsLayer({});
@@ -102,14 +129,22 @@
 			track1.appendChild(l2.layerDomEl);
 
 			l1.get_datum = (hash) => {
-				return 
+				if (hash === "path1") return path1;
+				if (hash === "path2") return path2; 
 			};
 
 			l1.get_hash = (datum) => {
-				return "path1";
+				if (datum === path1) return "path1";
+				if (datum === path2) return "path2";
 			};
 
-			l1.set(dataIt);
+			l1.set(path1);
+			l1.set(path2);
+
+			l1.accessor('color', (datum) => {
+				if (datum === path1) return "cyan";
+				if (datum === path2) return "red"; 
+			});
 
 
 		</script>

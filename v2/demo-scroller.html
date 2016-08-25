@@ -2,68 +2,71 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<script type="text/javascript" src="linear-scale.js"></script>
-		<script type="text/javascript" src="layers/segments-layer.js"></script>
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
+		<script type="text/javascript" src="../layers/points-layer-v2.js"></script>
+		<script type="text/javascript" src="../layers/markers-layer-v2.js"></script>
 
 		<style type="text/css">
 
-			layer {
-				overflow: hidden; 
-				top: 0px; 
-				position: absolute; 
-				height: 30px; 
-				width: 500px; 
-				background-color: none;
-			}
-
-			segment {
-				position: absolute; 
-				width: 60px; 
-				height: 30px; 
-				/*background-color: green;*/
-			}
 		</style>
 	</head>
 
 	<body>
-		<ttrack id="track1">
-		</ttrack>
+		<div id="track1" style="position: relative; height: 100px; width: 500px;">
+		</div>
 
 		<script type="text/javascript">
 			var data = [
-				{ 
-					id: 0, 
-					time: 0, 
+				// { 
+				// 	id: 0, 
+				// 	time: 0, 
+				// 	duration: 1, 
+				// 	backgroundColor: 'cyan', 
+				// 	lowValue: 0.5, 
+				// 	highValue: 0.6
+				// }, 
+				// { 
+				// 	id: 1, 
+				// 	time: 2, 
+				// 	duration: 1, 
+				// 	backgroundColor: 'cyan' 
+				// }, 
+				// { 
+				// 	id: 2, 
+				// 	time: 4, 
+				// 	duration: 1, 
+				// 	backgroundColor: 'cyan' 
+				// }, 
+				// { 
+				// 	id: 3, 
+				// 	time: 6, 
+				// 	duration: 1, 
+				// 	backgroundColor: 'cyan' 
+				// }, 
+				// { 
+				// 	id: 4, 
+				// 	time: 8, 
+				// 	duration: 1, 
+				// 	backgroundColor: 'cyan' 
+				// }, 
+			];
+
+			for (var i=0; i<100; i++) {
+				let c = document.createElement('span');
+				c.innerHTML = "" + i;
+				data.push({
+					id: i, 
+					time: i * 2, 
 					duration: 1, 
 					backgroundColor: 'cyan', 
-					lowValue: 0.5, 
-					highValue: 0.6
-				}, 
-				{ 
-					id: 1, 
-					time: 2, 
-					duration: 1, 
-					backgroundColor: 'cyan' 
-				}, 
-				{ 
-					id: 2, 
-					time: 4, 
-					duration: 1, 
-					backgroundColor: 'cyan' 
-				}, 
-				{ 
-					id: 3, 
-					time: 6, 
-					duration: 1, 
-					backgroundColor: 'cyan' 
-				}, 
-				{ 
-					id: 4, 
-					time: 8, 
-					duration: 1, 
-					backgroundColor: 'cyan' 
-				}, 
-			];
+					innerHTML: c
+				})
+			}
+
+
+
 
 			var dataIt = {
 				index: undefined, 
@@ -89,7 +92,9 @@
 			}.bind(dataIt);
 			
 
-			var l1 = new SegmentsLayer({});
+			var l1 = new SegmentsLayer({
+				width: 1000, height: 100
+			});
 
 			track1.appendChild(l1.layerDomEl);
 
@@ -201,15 +206,20 @@
 					selectedDatums.clear();
 					console.log('unselected all');
 				} 
-				let hash = e.target.dataset.hash;
-				let datum = l1.get_datum(hash);
+				var datum, 
+					tagName = e.target.tagName.toLowerCase();
+
+				if (tagName === 'segment') {
+					datum = e.target.datum;
+				} else {
+					datum = e.target.parentElement.datum;
+				}
 
 				if (datum) {
 					selectedDatums.add(datum);
-					console.log('selected ' + e.target.dataset.hash);
 				}
 
-				l1.refresh();
+				l1.update();
 			};
 
 			l1.on('mousedown', mousedown);
@@ -224,6 +234,24 @@
 
 			// 	console.log('click');
 			// })
+
+			// l1.layerDomEl.style.position = "relative";
+
+			// var back = document.createElement('button');
+			// var forw = document.createElement('button');
+
+			// back.innerHTML = "-0.1";
+			// forw.innerHTML = "+0.1";
+
+			// document.body.appendChild(back);
+			// document.body.appendChild(forw);
+
+
+			// SCROLLER
+			var scroller = new SegmentsLayer({
+				height: 50, width: 500
+			});
+			// --------
 		</script>
 		
 	</body>

@@ -76,7 +76,7 @@ class MarkersLayer extends Layer {
 		stick.style.position = 'absolute';
 		stick.style.backgroundColor = this._.accessors.color(datum, 'stick');
 		stick.style.opacity = this._.accessors.opacity(datum, 'stick');
-		stick.style.display = (this._.accessors.visible(datum, 'stick'))? 'inline' : 'none';
+		stick.style.display = (this._.accessors.visible(datum, 'stick'))? 'block' : 'none';
 
 		return stick;
 	}
@@ -88,7 +88,7 @@ class MarkersLayer extends Layer {
 		handler.style.position = 'absolute';
 		handler.style.backgroundColor = this._.accessors.color(datum, 'handler');
 		handler.style.opacity = this._.accessors.opacity(datum, 'handler');
-		handler.style.display = (this._.accessors.visible(datum, 'handler'))? 'inline' : 'none';
+		handler.style.display = (this._.accessors.visible(datum, 'handler'))? 'block' : 'none';
 
 		return handler;
 	}
@@ -100,7 +100,7 @@ class MarkersLayer extends Layer {
 		marker.style.height = "100%";
 		marker.style.zIndex = this._.accessors.zIndex(datum, 'marker');
 		marker.style.opacity = this._.accessors.opacity(datum, 'marker');
-		marker.style.display = (this._.accessors.visible(datum, 'marker'))? 'inline' : 'none';
+		marker.style.display = (this._.accessors.visible(datum, 'marker'))? 'block' : 'none';
 
 		return marker;
 	}
@@ -112,80 +112,37 @@ class MarkersLayer extends Layer {
 		if (innerHTML instanceof Node)
 			content.appendChild(innerHTML);
 		content.style.opacity = this._.accessors.opacity(datum, 'content');
-		content.style.display = (this._.accessors.visible(datum, 'content'))? 'inline' : 'none';
+		content.style.display = (this._.accessors.visible(datum, 'content'))? 'block' : 'none';
 
 		return content;
 	}
 
-	set(datum) {
-		let hash = this.get_hash(datum);
-		var marker, handler, stick, content;
+	set(datum, $marker) {
+		$marker = super.set(datum, $marker);
+
+		this._configure_marker($marker, datum);
+
+		this._configure_stick($marker.safk.stick, datum);
+
+		this._configure_handler($marker.safk.handler, datum);
+
+		this._configure_content($marker.safk.content, $marker, datum);
+
+		return $marker;
+	}
+
+	allocate_element(datum) {
+		let $marker = super.allocate_element(datum);
+
+		$marker.safk = $marker.safk || {};
+
+		if (!$marker.safk.content) $marker.appendChild($marker.safk.content = document.createElement('content'));
 		
-		marker = this.get_element(hash);
+		if (!$marker.safk.stick) $marker.appendChild($marker.safk.stick = document.createElement('stick'));
+		
+		if (!$marker.safk.handler) $marker.appendChild($marker.safk.handler = document.createElement('handler'));
 
-		if (marker) {
-
-			content = segment.querySelector('content');
-			stick = segment.querySelector('stick');
-			handler = segment.querySelector('handler');
-
-		} else if (marker = this._.unusedDomElsList.pop()) {
-
-			content = segment.querySelector('content');
-			stick = segment.querySelector('stick');
-			handler = segment.querySelector('handler');
-
-			// this._.$el.appendChild(marker);
-
-			this.associate_element_to(marker, hash);
-
-		} else {
-			marker = document.createElement('marker');
-			content = document.createElement('content');
-			stick = document.createElement('stick');
-			handler = document.createElement('handler');
-
-			marker.appendChild(content);
-			marker.appendChild(stick);
-			marker.appendChild(handler);
-
-			this._.$el.appendChild(marker);
-
-			this.associate_element_to(marker, hash);
-		}
-
-		this._configure_marker(marker, datum);
-
-		this._configure_stick(stick, datum);
-
-		this._configure_handler(handler, datum);
-
-		this._configure_content(content, marker, datum);
-
-		return marker;
-	}
-
-	/*
-	 *	Associate a DOM (or, in specific cases, the rendered object) to a datum hash.
-	 */
-	associate_element_to($el, hash) {
-		$el.setAttribute('data-hash', hash);
-		$el.datum = this.get_datum(hash);	
-	}
-
-	/*
-	 * Return the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	get_element(hash) {
-		return this._.$el.querySelector('marker[data-hash="'+hash+'"]');
-	}
-
-	/*
-	 * Remove the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	unassociate_element_to($el, hash) {
-		$el.removeAttribute('data-hash');
-		delete $el.datum;
+		return $marker;
 	}
 
 }

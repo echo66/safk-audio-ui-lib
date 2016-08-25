@@ -94,6 +94,15 @@ class WaveformsLayer extends Layer {
 			return (d.visible !== undefined)? d.visible : true; 
 		});
 
+		this._.waveformValueToPixel = linear().domain([-1, 1]).range([0, this.height]);
+
+		this._.onchange = (property, newValue) => {
+			if (property === 'height') {
+				let range = this._.waveformValueToPixel.range();
+				range[1] = newValue;
+			}
+		};
+
 		this._.canvas = document.createElement('canvas');
 	}
 
@@ -136,7 +145,7 @@ class WaveformsLayer extends Layer {
 
 		for (var i = bufferStart; i <= bufferEnd; i++) {
 			var valAm = il[i]
-			var valPx = l1._.valueToPixel(valAm);
+			var valPx = l1._.waveformValueToPixel(valAm);
 			ctx.lineTo(px, valPx);
 			px += pixelStep;
 		}
@@ -156,7 +165,7 @@ class WaveformsLayer extends Layer {
 		segment.style.height = segment.parentElement.style.height;
 		segment.style.zIndex = this._.accessors.zIndex(datum, 'segment');
 		segment.style.opacity = this._.accessors.opacity(datum, 'segment');
-		segment.style.display = (this._.accessors.visible(datum, 'segment'))? 'inline' : 'none';
+		segment.style.display = (this._.accessors.visible(datum, 'segment'))? 'block' : 'none';
 		segment.style.zIndex = this._.accessors.zIndex(datum, 'segment');
 		segment.style.backgroundColor = this._.accessors.color(datum, 'segment');
 
@@ -173,7 +182,7 @@ class WaveformsLayer extends Layer {
 		leftHandler.style.position = "absolute";
 		leftHandler.style.opacity = this._.accessors.opacity(datum, 'left-handler');
 		leftHandler.style.zIndex = this._.accessors.zIndex(datum, 'left-handler');
-		leftHandler.style.display = (this._.accessors.visible(datum, 'left-handler'))? 'inline' : 'none';
+		leftHandler.style.display = (this._.accessors.visible(datum, 'left-handler'))? 'block' : 'none';
 
 		return leftHandler;
 	}
@@ -188,7 +197,7 @@ class WaveformsLayer extends Layer {
 		rightHandler.style.position = "absolute";
 		rightHandler.style.opacity = this._.accessors.opacity(datum, 'right-handler');
 		rightHandler.style.zIndex = this._.accessors.zIndex(datum, 'right-handler');
-		rightHandler.style.display = (this._.accessors.visible(datum, 'right-handler'))? 'inline' : 'none';
+		rightHandler.style.display = (this._.accessors.visible(datum, 'right-handler'))? 'block' : 'none';
 
 		return rightHandler;
 	}
@@ -202,7 +211,7 @@ class WaveformsLayer extends Layer {
 		topHandler.style.position = "absolute";
 		topHandler.style.opacity = this._.accessors.opacity(datum, 'top-handler');
 		topHandler.style.zIndex = this._.accessors.zIndex(datum, 'top-handler');
-		topHandler.style.display = (this._.accessors.visible(datum, 'top-handler'))? 'inline' : 'none';
+		topHandler.style.display = (this._.accessors.visible(datum, 'top-handler'))? 'block' : 'none';
 
 		return topHandler;
 	}
@@ -217,7 +226,7 @@ class WaveformsLayer extends Layer {
 		bottomHandler.style.position = "absolute";
 		bottomHandler.style.opacity = this._.accessors.opacity(datum, 'bottom-handler');
 		bottomHandler.style.zIndex = this._.accessors.zIndex(datum, 'bottom-handler');
-		bottomHandler.style.display = (this._.accessors.visible(datum, 'bottom-handler'))? 'inline' : 'none';
+		bottomHandler.style.display = (this._.accessors.visible(datum, 'bottom-handler'))? 'block' : 'none';
 
 		return bottomHandler;
 	}
@@ -230,14 +239,18 @@ class WaveformsLayer extends Layer {
 		header.style.position = "absolute";
 		header.style.opacity = this._.accessors.opacity(datum, 'header');
 		header.style.zIndex = this._.accessors.zIndex(datum, 'header');
-		header.style.display = (this._.accessors.visible(datum, 'header'))? 'inline' : 'none';
+		header.style.display = (this._.accessors.visible(datum, 'header'))? 'block' : 'none';
 
 		var span = header.children[0];
+		if (!span) {
+			span = document.createElement('span');
+			header.appendChild(span);
+		}
 		span.style.fontFamily = this._.accessors.fontFamily(datum);
 		span.style.fontSize = this._.accessors.fontSize(datum);
 		span.style.fontColor = this._.accessors.color(datum, 'text');
 		span.style.opacity = this._.accessors.opacity(datum, 'text');
-		span.style.display = (this._.accessors.visible(datum, 'text'))? 'inline' : 'none';
+		span.style.display = (this._.accessors.visible(datum, 'text'))? 'block' : 'none';
 		span.innerHTML = this._.accessors.text(datum);
 		span.style.pointerEvents = "none";
 		span.onselectstart="return false;" 
@@ -293,100 +306,49 @@ class WaveformsLayer extends Layer {
 		waveform.style.height = "100%";
 		waveform.style.opacity = this._.accessors.opacity(datum, 'waveform');
 		waveform.style.zIndex = this._.accessors.zIndex(datum, 'waveform');
-		waveform.style.display = (this._.accessors.visible(datum, 'waveform'))? 'inline' : 'none';
+		waveform.style.display = (this._.accessors.visible(datum, 'waveform'))? 'block' : 'none';
 
 		return waveform;
 	}
 
-	set(datum) {
-		let hash = this.get_hash(datum);
-		var segment, header, waveform, leftHandler, 
-		rightHandler, topHandler, bottomHandler;
-		
-		segment = this.get_element(hash);
+	set(datum, $segment) {
+		$segment = super.set(datum, $segment);
 
-		if (segment) {
+		this._configure_segment($segment, datum);
 
-			header = segment.querySelector('header');
-			waveform = segment.querySelector('waveform');
-			leftHandler = segment.querySelector('handler[left-handler]');
-			rightHandler = segment.querySelector('handler[right-handler]');
-			topHandler = segment.querySelector('handler[top-handler]');
-			bottomHandler = segment.querySelector('handler[bottom-handler]');
+		this._configure_left_handler($segment.safk.leftHandler, datum);
 
-		} else if (segment = this._.unusedDomElsList.pop()) {
+		this._configure_right_handler($segment.safk.rightHandler, datum);
 
-			header = segment.querySelector('header');
-			waveform = segment.querySelector('waveform');
-			leftHandler = segment.querySelector('handler[left-handler]');
-			rightHandler = segment.querySelector('handler[right-handler]');
-			topHandler = segment.querySelector('handler[top-handler]');
-			bottomHandler = segment.querySelector('handler[bottom-handler]');
+		this._configure_top_handler($segment.safk.topHandler, datum);
 
-			this.associate_element_to(segment, hash);
+		this._configure_bottom_handler($segment.safk.bottomHandler, datum);
 
-		} else {
+		this._configure_header($segment.safk.header, datum);
 
-			segment = document.createElement('waveform-segment');
-			header = document.createElement('header');
-			waveform = document.createElement('waveform');
-			leftHandler = document.createElement('handler');
-			rightHandler = document.createElement('handler');
-			topHandler = document.createElement('handler');
-			bottomHandler = document.createElement('handler');
+		this._configure_waveform($segment.safk.waveform, datum);
 
-			header.appendChild(document.createElement('span'));
-
-			segment.appendChild(header);
-			segment.appendChild(waveform);
-			segment.appendChild(leftHandler);
-			segment.appendChild(rightHandler);
-			segment.appendChild(topHandler);
-			segment.appendChild(bottomHandler);
-
-			this._.$el.appendChild(segment);
-
-			this.associate_element_to(segment, hash);
-
-		}
-
-		this._configure_segment(segment, datum);
-
-		this._configure_left_handler(leftHandler, datum);
-
-		this._configure_right_handler(rightHandler, datum);
-
-		this._configure_top_handler(topHandler, datum);
-
-		this._configure_bottom_handler(bottomHandler, datum);
-
-		this._configure_header(header, datum);
-
-		this._configure_waveform(waveform, datum);
-
-		return segment;
+		return $segment;
 	}
 
-	/*
-	 *	Associate a DOM (or, in specific cases, the rendered object) to a datum hash.
-	 */
-	associate_element_to($el, hash) {
-		$el.setAttribute('data-hash', hash);
-		$el.datum = this.get_datum(hash);	
-	}
+	allocate_element(datum) {
+		let $segment = super.allocate_element(datum);
 
-	/*
-	 * Return the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	get_element(hash) {
-		return this._.$el.querySelector('waveform-segment[data-hash="'+hash+'"]');
-	}
+		$segment.safk = $segment.safk || {};
 
-	/*
-	 * Remove the DOM (or, in specific cases, the rendered object) associated with the datum hash.
-	 */
-	unassociate_element_to($el, hash) {
-		$el.removeAttribute('data-hash');
-		delete $el.datum;
+		if (!$segment.safk.header) $segment.appendChild($segment.safk.header = document.createElement('header'));
+
+		if (!$segment.safk.waveform) $segment.appendChild($segment.safk.waveform = document.createElement('waveform'));
+
+		if (!$segment.safk.leftHandler) $segment.appendChild($segment.safk.leftHandler = document.createElement('handler'));
+
+		if (!$segment.safk.rightHandler) $segment.appendChild($segment.safk.rightHandler = document.createElement('handler'));
+
+		if (!$segment.safk.topHandler) $segment.appendChild($segment.safk.topHandler = document.createElement('handler'));
+
+		if (!$segment.safk.bottomHandler) $segment.appendChild($segment.safk.bottomHandler = document.createElement('handler'));
+
+
+		return $segment;
 	}
 }

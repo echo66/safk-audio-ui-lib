@@ -10,26 +10,33 @@
 		<style type="text/css">
 
 			layer {
-				overflow: hidden; 
+				/*overflow: hidden; */
 				top: 0px; 
 				position: absolute; 
-				height: 30px; 
-				width: 500px; 
-				background-color: none;
+				/*height: 30px; */
+				/*width: 500px; */
+				/*background-color: none; */
 			}
 
 			segment {
-				position: absolute; 
-				width: 60px; 
-				height: 30px; 
+				/*position: absolute; */
+				/*width: 60px; */
+				/*height: 30px; */
 				/*background-color: green;*/
+			}
+
+			.track {
+				position: relative;
+				height: 100px;
+				width: 500px;
+				display: block;
 			}
 		</style>
 	</head>
 
 	<body>
-		<ttrack id="track1">
-		</ttrack>
+		<div id="track1" class="track">
+		</div>
 
 		<script type="text/javascript">
 			var data1 = [
@@ -60,7 +67,9 @@
 				}, 
 			];
 
-			var l1 = new PointsLayer({});
+			var l1 = new PointsLayer({
+				height: 100, width: 500
+			});
 
 			track1.appendChild(l1.layerDomEl);
 
@@ -117,7 +126,9 @@
 				}, 
 			];
 
-			var l2 = new SegmentsLayer({});
+			var l2 = new SegmentsLayer({
+				height: 100, width: 500
+			});
 
 			track1.appendChild(l2.layerDomEl);
 
@@ -132,6 +143,15 @@
 			};
 
 			data2.forEach((datum) => l2.set(datum));
+
+			var back = document.createElement('button');
+			var forw = document.createElement('button');
+
+			back.innerHTML = "-0.1";
+			forw.innerHTML = "+0.1";
+
+			document.body.appendChild(back);
+			document.body.appendChild(forw);
 
 		</script>
 		
