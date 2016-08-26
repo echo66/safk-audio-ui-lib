@@ -72,9 +72,20 @@ class WaveformsLayer extends Layer {
 		this.accessor('zIndex', (d, elementName) => { 
 			/*
 			 * 'right-handler' 'left-handler' 'bottom-handler' 
-			 * 'top-handler' 'waveform' 'text' 
+			 * 'top-handler' 'waveform' 'waveform-overlay' 
 			 * 'header' 'segment'
 			 */
+			switch (elementName) {
+				case 'waveform': return 0;
+				case 'waveform-overlay': return 1;
+				case 'header': return 2;
+				case 'right-handler':
+				case 'left-handler':
+				case 'top-handler':
+				case 'bottom-handler': return 3;
+
+				default: return 1;
+			}
 			return (d.zIndex !== undefined)? d.zIndex : 1;
 		});
 		this.accessor('opacity', (d, elementName) => { 
@@ -104,15 +115,31 @@ class WaveformsLayer extends Layer {
 		};
 
 		this._.canvas = document.createElement('canvas');
+
+		const that = this;
+
+		let timeoutFn = () => {
+			var waveform = that._.$el.querySelector("waveform[do-rendering]");
+			if (waveform) {
+				// var canvas = waveform.querySelector('canvas');
+				var image = waveform.querySelector('img');
+				var canvas = this._.canvas;
+				that._render_waveform(waveform.parentElement.datum, canvas, waveform.parentElement)
+						.then(that._convert_canvas_to_image(image, canvas));
+				waveform.removeAttribute("do-rendering");
+			}
+			setTimeout(timeoutFn, 250);
+		};
+
+		setTimeout(timeoutFn, 250);
 	}
 
-	_convert_canvas_to_image(image) {
-		var dataURL = this._.canvas.toDataURL();
-		// var image = document.createElement('img');
+	_convert_canvas_to_image(image, canvas) {
+		var dataURL = canvas.toDataURL();
 		image.src = dataURL;
 		image.style.pointerEvents = "none";
-		image.onselectstart="return false;" 
-		image.onmousedown="return false;"
+		image.onselectstart = () => { return false; };
+		image.onmousedown = () => { return false; };
 		image.unselectable = "on";
 		image.style.mozUserSelect = "mozNone";
 		image.style.khtmlUserSelect = "none";
@@ -122,37 +149,41 @@ class WaveformsLayer extends Layer {
 		return image;
 	}
 
-	_render_waveform(datum, outerHTML) {
-		var ctx = this._.canvas.getContext("2d");
-		ctx.clearRect(0, 0, this._.canvas.width, this._.canvas.height);
+	_render_waveform(datum, canvas, outerHTML) {
+		return new Promise((resolve, reject) => {
+			var ctx = canvas.getContext("2d");
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		var bufferStart = this._.accessors.bufferStart(datum, 0);
-		var bufferEnd = this._.accessors.bufferEnd(datum, 0);
+			var bufferStart = this._.accessors.bufferStart(datum, 0);
+			var bufferEnd = this._.accessors.bufferEnd(datum, 0);
 
-		var il = this._.accessors.channelData(datum, 0);
+			var il = this._.accessors.channelData(datum, 0);
 
-		var numSamples = bufferEnd - bufferStart;
-		this._.canvas.width = Math.min(this._.accessors.waveformMaxDetail(datum), numSamples);
-		this._.canvas.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
-		var numPixels  = this._.canvas.width;
+			var numSamples = bufferEnd - bufferStart;
+			canvas.width = Math.min(this._.accessors.waveformMaxDetail(datum), numSamples);
+			canvas.height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
+			var numPixels  = canvas.width;
 
-		var pixelStep = numPixels / numSamples;
+			var pixelStep = numPixels / numSamples;
 
-		ctx.moveTo(0, 0);
-		ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.beginPath();
 
-		var px = 0;
+			var px = 0;
 
-		for (var i = bufferStart; i <= bufferEnd; i++) {
-			var valAm = il[i]
-			var valPx = l1._.waveformValueToPixel(valAm);
-			ctx.lineTo(px, valPx);
-			px += pixelStep;
-		}
+			for (var i = bufferStart; i <= bufferEnd; i++) {
+				var valAm = il[i]
+				var valPx = l1._.waveformValueToPixel(valAm);
+				ctx.lineTo(px, valPx);
+				px += pixelStep;
+			}
 
-		ctx.lineWidth = this._.accessors.width(datum, 'waveform');
-		ctx.strokeStyle = this._.accessors.color(datum, 'waveform');
-		ctx.stroke();
+			ctx.lineWidth = this._.accessors.width(datum, 'waveform');
+			ctx.strokeStyle = this._.accessors.color(datum, 'waveform');
+			ctx.stroke();
+
+			resolve();
+		});
 	}
 
 	_configure_segment(segment, datum) {
@@ -253,8 +284,8 @@ class WaveformsLayer extends Layer {
 		span.style.display = (this._.accessors.visible(datum, 'text'))? 'block' : 'none';
 		span.innerHTML = this._.accessors.text(datum);
 		span.style.pointerEvents = "none";
-		span.onselectstart="return false;" 
-		span.onmousedown="return false;"
+		span.onselectstart = () => { return false; };
+		span.onmousedown = () => { return false; };
 		span.unselectable = "on";
 		span.style.mozUserSelect = "mozNone";
 		span.style.khtmlUserSelect = "none";
@@ -268,39 +299,49 @@ class WaveformsLayer extends Layer {
 	_configure_waveform(waveform, datum) {
 		waveform.style.position = "absolute";
 		var outerHTML = waveform.parentElement;
-		var overlay, image;
+		var image, canvas;
 		var refresh = (waveform.childElementCount === 0) || this._.accessors.refresh(datum);
 		var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
-		var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2))
+		var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
 
 		if (waveform.childElementCount === 0) {
-			overlay = document.createElement('div');
 			image = document.createElement('img');
+			// canvas = document.createElement('canvas');
 			
-			waveform.appendChild(overlay);
 			waveform.appendChild(image);
+			// waveform.appendChild(canvas);
 		} else {
-			overlay = waveform.querySelector('div');
 			image = waveform.querySelector('img');
+			// canvas = waveform.querySelector('canvas');
 		}
 
 		if (refresh) {
-			this._render_waveform(datum, outerHTML);
-
-			this._convert_canvas_to_image(image);
+			waveform.setAttribute('do-rendering', true);
+			// this._render_waveform(datum, outerHTML).then(this._convert_canvas_to_image(image));
 		}
 
-		overlay.style.position = "absolute";
-		overlay.style.left = "0";
-		overlay.style.top = "0";
-		overlay.style.background = "rgba(255,255,255,0)";
-		overlay.style.zIndex = 2;
-		overlay.style.width = width + "px";
-		overlay.style.height = height + "px";
+		// canvas.style.position = "absolute";
+		// canvas.style.left = "0";
+		// canvas.style.top = "0";
+		// canvas.width = width;
+		// canvas.height = height;
+		// canvas.style.zIndex = -1;
+		// canvas.style.pointerEvents = "none";
+		// canvas.onselectstart = () => { return false; };
+		// canvas.onmousedown = () => { return false; };
+		// canvas.unselectable = "on";
+		// canvas.style.mozUserSelect = "mozNone";
+		// canvas.style.khtmlUserSelect = "none";
+		// canvas.style.webkitUserSelect = "none";
+		// canvas.style.oUserSelect = "none";
+		// canvas.style.userSelect = "none";
 
+		image.style.position = "absolute";
+		image.style.left = "0";
+		image.style.top = "0";
 		image.width = width;
 		image.height = height;
-		image.style.zIndex = 1;
+		image.style.zIndex = -1;
 
 		waveform.style.width = "100%";
 		waveform.style.height = "100%";
@@ -309,6 +350,21 @@ class WaveformsLayer extends Layer {
 		waveform.style.display = (this._.accessors.visible(datum, 'waveform'))? 'block' : 'none';
 
 		return waveform;
+	}
+
+	_configure_waveform_overlay(waveformOverlay, datum) {
+		var outerHTML = waveformOverlay.parentElement;
+		var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
+		var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
+		waveformOverlay.style.position = "absolute";
+		waveformOverlay.style.left = "0";
+		waveformOverlay.style.top = "0";
+		waveformOverlay.style.background = "rgba(255,255,255,0)";
+		waveformOverlay.style.zIndex = this._.accessors.zIndex(datum, 'waveform-overlay');
+		waveformOverlay.style.width = width + "px";
+		waveformOverlay.style.height = height + "px";
+
+		return waveformOverlay;
 	}
 
 	set(datum, $segment) {
@@ -327,6 +383,8 @@ class WaveformsLayer extends Layer {
 		this._configure_header($segment.safk.header, datum);
 
 		this._configure_waveform($segment.safk.waveform, datum);
+
+		this._configure_waveform_overlay($segment.safk.waveformOverlay, datum);
 
 		return $segment;
 	}
@@ -347,6 +405,8 @@ class WaveformsLayer extends Layer {
 		if (!$segment.safk.topHandler) $segment.appendChild($segment.safk.topHandler = document.createElement('handler'));
 
 		if (!$segment.safk.bottomHandler) $segment.appendChild($segment.safk.bottomHandler = document.createElement('handler'));
+
+		if (!$segment.safk.waveformOverlay) $segment.appendChild($segment.safk.waveformOverlay = document.createElement('waveform-overlay'));
 
 
 		return $segment;

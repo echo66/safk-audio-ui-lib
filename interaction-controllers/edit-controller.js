@@ -18,8 +18,8 @@ class EditController {
 
 			that._.selectioncheck(e);
 
-			that._.layer.on('mousemove', that._.drag);
-			that._.layer.on('mouseup', that._.dragend);
+			that._.layer.layerDomEl.addEventListener('mousemove', that._.drag);
+			that._.layer.layerDomEl.addEventListener('mouseup', that._.dragend);
 		};
 
 		this._.drag = (e) => {
@@ -29,7 +29,7 @@ class EditController {
 				// console.log('start drag');
 			that._.lastEventType = e.type;
 
-			that._.layer.off('mousedown', that._.mousedown);
+			that._.layer.layerDomEl.removeEventListener('mousedown', that._.mousedown);
 
 			that._.selectedData.forEach((datum) => {
 				let dx = e.clientX - that._.lastCoords.x;
@@ -45,12 +45,12 @@ class EditController {
 		this._.dragend = (e) => {
 			that._.lastCoords.x = e.clientX;
 			that._.lastCoords.y = e.clientY;
-			that._.layer.off('mousemove', that._.drag);
-			that._.layer.off('mouseup', that._.dragend);
+			that._.layer.layerDomEl.removeEventListener('mousemove', that._.drag);
+			that._.layer.layerDomEl.removeEventListener('mouseup', that._.dragend);
 			// console.log('end drag');
 			that._.lastEventType = e.type;
 
-			that._.layer.on('mousedown', that._.mousedown);
+			that._.layer.layerDomEl.addEventListener('mousedown', that._.mousedown);
 			// targetDatum = undefined;
 		};
 
@@ -75,7 +75,7 @@ class EditController {
 			that._.layer.update();
 		};
 
-		this._.layer.on('mousedown', this._.mousedown);
+		this._.layer.layerDomEl.addEventListener('mousedown', this._.mousedown);
 	}
 
 	get selectedData() {

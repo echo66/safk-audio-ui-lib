@@ -162,6 +162,15 @@
 				}
 			};
 
+
+			l1.layerDomEl.addEventListener("touchstart", (e) => { console.log('touchstart'); }, false);
+			l1.layerDomEl.addEventListener("touchend", (e) => { console.log('touchend'); }, false);
+			l1.layerDomEl.addEventListener("touchcancel", (e) => { console.log('touchcancel'); }, false);
+			l1.layerDomEl.addEventListener("touchmove", (e) => { console.log('touchmove'); }, false);
+
+
+
+
 			var back = document.createElement('button');
 			var forw = document.createElement('button');
 
@@ -170,6 +179,8 @@
 
 			document.body.appendChild(back);
 			document.body.appendChild(forw);
+
+
 		</script>
 		
 	</body>
