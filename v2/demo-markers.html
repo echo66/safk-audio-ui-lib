@@ -3,13 +3,25 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/markers-layer-v2.js"></script>
+		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
 
+
+		<script src='https://mohayonao.github.io/timbre.js/timbre.dev.js'></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/jquery.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/codemirror.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/javascript.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/xml.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/htmlmixed.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/subcollider.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/common.js"></script>
 	</head>
 
 	<body>
-		<div id="track1" style="position: relative; height: 100px; width: 500px;">
+		<div id="track1" style="position: relative; height: 100px; width: 1000px;">
 		</div>
 
 		<script type="text/javascript">
@@ -18,55 +30,64 @@
 			content.style.position = 'absolute';
 			content.innerHTML = '<span>m1</span>';
 
-			var data = [
-				{ 
-					id: 0, 
-					time: 0, 
-					value: Math.random(), 
-					innerHTML: content
-				}, 
-				{ 
-					id: 1, 
-					time: 2, 
-					value: Math.random()
-				}, 
-				{ 
-					id: 2, 
-					time: 4, 
-					value: Math.random()
-				}, 
-				{ 
-					id: 3, 
-					time: 6, 
-					value: Math.random()
-				}, 
-				{ 
-					id: 4, 
-					time: 8, 
-					value: Math.random()
-				}, 
-			];
+			var data = {};
 
-			var l1 = new MarkersLayer({
-				height: 100, width: 500
+			for (var i=0; i < 10; i++) {
+				data[i + ""] = {
+					id: i + "", 
+					time: i
+				};
+			}
+
+			function create_markers_layer() {
+				var l = new MarkersLayer({
+					height: 100, width: 1000
+				});
+
+				track1.appendChild(l.layerDomEl);
+
+				l.get_datum = (hash) => {
+					return data[hash];
+				};
+
+				l.get_hash = (datum) => {
+					return datum.id + "";
+				};
+
+				for (var i in data) 
+					l.set(data[i]);
+
+				l.layerDomEl.style.backgroundColor = "yellow";
+
+				return l;
+			}
+
+			var l1 = create_markers_layer();
+
+			var selectionManager = new SelectionManager();
+
+			var editController = new SimpleEditController({ layer: l1 });
+
+			// l1.layerDomEl.style["overflow-x"] = "scroll";
+			// l1.layerDomEl.style["height"] = "110px";
+
+			l1.layerDomEl.addEventListener('scroll', function(e) {
+				console.log(e);
 			});
 
-			track1.appendChild(l1.layerDomEl);
+			// l1.layerDomEl.addEventListener('mousedown', (e) => {
+			// 	console.log('mousedown')
+			// });
 
-			l1.get_datum = (hash) => {
-				for (let i=0; i<data.length; i++) 
-					if ((data[i].id + "") === hash)
-						return data[i];
-			};
+			// l1.layerDomEl.addEventListener('mousemove', (e) => {
+			// 	console.log('mousemove')
+			// });
 
-			l1.get_hash = (datum) => {
-				return datum.id + "";
-			};
-
-			data.forEach((datum) => l1.set(datum));
+			// for (var i=0; i<10; i++)
+			// 	create_markers_layer();
 
 
 		</script>
-		
+		<script src="timbre-demo.js"></script>		
 	</body>
 </html>

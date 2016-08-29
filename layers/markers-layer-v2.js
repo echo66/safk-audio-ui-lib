@@ -16,6 +16,8 @@ class MarkersLayer extends Layer {
 			layerElementDatumHashAttribute: 'data-hash'
 		});
 
+		const that = this;
+
 		// DEFINE ACCESSORS
 		{
 			this.accessor('time', (d) => { 
@@ -61,7 +63,16 @@ class MarkersLayer extends Layer {
 				/*
 				 * 'stick' 'handler' 'marker' 'content' 
 				 */
-				return (d.visible !== undefined)? d.visible : true; 
+
+				return true;
+				
+				// return (d.visible !== undefined)? d.visible : true; 
+
+				// var time = that._.accessors.time(d);
+				// if (time > this.timeDomain[1])
+				// 	return false;
+				// else 
+				// 	return true;
 			});
 			this.accessor('innerHTML', (d, outerHTML) => { 
 				return d.innerHTML;
@@ -109,8 +120,14 @@ class MarkersLayer extends Layer {
 		content.style.position = "absolute";
 		content.innerHTML = "";
 		let innerHTML = this._.accessors.innerHTML(datum, marker);
-		if (innerHTML instanceof Node)
-			content.appendChild(innerHTML);
+		if (innerHTML instanceof Node) {
+			let child = content.childNodes[0];
+			if (child && innerHTML !== child) {
+				content.replaceChild(innerHTML, child);
+			} else {
+				content.appendChild(innerHTML);
+			}
+		}
 		content.style.opacity = this._.accessors.opacity(datum, 'content');
 		content.style.display = (this._.accessors.visible(datum, 'content'))? 'block' : 'none';
 

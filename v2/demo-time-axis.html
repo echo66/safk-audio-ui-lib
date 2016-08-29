@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/list.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/time-axis-layer-v2.js"></script>
+	</head>
+
+	<body>
+		<ttrack id="track1" style="position: relative; height: 100px; width: 500px;">
+		</ttrack>
+
+		<script type="text/javascript">
+
+			var l1 = new TimeAxisLayer({
+				height: 50, width: 500
+			});
+
+			var axis1 = {
+				currentTime: undefined, 
+				timeDomain: undefined, 
+				entry: { 
+					value: undefined, 
+					done: undefined 
+				}, 
+				nextValue: { 
+					time: undefined, 
+					color: undefined, 
+					width: undefined, 
+					height: undefined, 
+					text: undefined, 
+					textOffset: undefined, 
+				}
+			};
+			axis1.start = function(timeAxisLayer) {
+				this.timeDomain = timeAxisLayer.timeDomain;
+				this.currentTime = this.timeDomain[0];
+				this.timeStep;
+			}.bind(axis1);
+			axis1.next = function() {
+				if (this.currentTime > this.timeDomain[1]) {
+					this.entry.value = undefined;
+					this.entry.done = true;
+				} else {
+					this.nextValue.time = this.currentTime; 
+					this.nextValue.color = 'black'; 
+					this.nextValue.width = 2; 
+					this.nextValue.height = undefined; 
+					this.nextValue.text = this.currentTime + ""; 
+					this.nextValue.textOffset = 2;
+
+					this.entry.value = this.nextValue;
+					this.entry.done = false;
+
+					this.currentTime += this.timeStep;
+				}
+				return this.entry;
+			}.bind(axis1);
+			axis1.stop = function() {
+				this.timeDomain = undefined;
+				this.currentTime = undefined;
+				this.timeStep = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+				this.nextValue.time = undefined; 
+				this.nextValue.color = undefined; 
+				this.nextValue.width = undefined; 
+				this.nextValue.height = undefined; 
+				this.nextValue.text = undefined;
+				this.nextValue.textOffset = undefined; 
+			}.bind(axis1);
+
+			var axes = {
+				axes: [axis1], 
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			axes.start = function() {
+				this.index = 0;
+			}.bind(axes);
+			axes.next = function() {
+				if (this.index < this.axes.length) {
+					this.entry.value = this.axes[this.index++];
+					this.entry.done = false;
+				} else {
+					this.entry.value = undefined;
+					this.entry.done = true;
+				}
+				return this.entry;
+			}.bind(axes);
+			axes.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(axes);
+
+			l1.get_datum = (hash) => {
+				return axis1;
+			};
+
+			l1.get_hash = (datum) => {
+				return "axis1";
+			};
+
+			l1.defaultIterator = axes;
+
+			track1.appendChild(l1.layerDomEl);
+
+			l1.update();
+
+
+		</script>
+		
+	</body>
+</html>

@@ -1,5 +1,7 @@
 'use strict'
 
+// import { List } from './list.js';
+
 class Layer {
 
 	/* 
@@ -31,7 +33,7 @@ class Layer {
 
 		this._.$el = document.createElement(this._.layerTagName);
 		// this._.$el.style.position = "absolute";
-		this._.$el.style.overflow = "hidden";
+		// this._.$el.style.overflow = "hidden";
 		this._.$el.style.display = "block";
 		this._.$el.style.height = layerHeight + "px";
 		this._.$el.style.width = layerWidth + "px";
@@ -110,73 +112,83 @@ class Layer {
 		this._.autoRefresh = true;
 		this._.refreshOnScroll = false;
 
-		this._.defaultIterator = params.defaultIterator;
+		this._.activeElsList = new List();
+		this._.unusedElsList = new List();
+		this._.auxElsList = new List();
 
-		this._.unusedElsList = new Object();
-		this._.unusedElsList.firstEl = undefined;
-		this._.unusedElsList.lastEl = undefined;
-		this._.unusedElsList.size = 0;
-		this._.unusedElsList.pop = function() {
-			if (this.firstEl) {
-				let el = this.firstEl;
-				this.firstEl = this.firstEl.nextEl;
-				if (this.firstEl === undefined)
-					this.lastEl = undefined;
-				delete el.nextEl;
-				this.size--;
-				return el;
-			}
-			return undefined;
-		}.bind(this._.unusedElsList);
-		this._.unusedElsList.push = function(el) {
-			if (!this.firstEl) {
-				this.firstEl = this.lastEl = el;
-				el.nextEl = undefined;
-			} else if (this.lastEl) {
-				this.lastEl.nextEl = el;
-				this.lastEl = el;
-				el.nextEl = undefined;
-			} else {
-				this.firstEl = this.lastEl = el;
-				el.nextEl = undefined;
-			}
-			this.size++;
-		}.bind(this._.unusedElsList);
-
+		this._.defaultIterator = params.defaultIterator ||
+									{
+										entry: { value: undefined, done: false }, 
+										start: function(layer) {
+											this.entry.value = undefined;
+											this.entry.done = false;
+											this.nextActiveEl = that._.activeElsList.firstEl;
+											this.listNexProp = that._.activeElsList.propertyName;
+										}, 
+										next: function() {
+											if (this.nextActiveEl) {
+												var hash = this.nextActiveEl.getAttribute(that._.layerElementDatumHashAttribute);
+												var datum = that.get_datum(hash);
+												this.nextActiveEl = this.nextActiveEl[this.listNexProp];
+												this.entry.value = datum;
+												this.entry.done = false;
+											} else {
+												this.entry.value = undefined;
+												this.entry.done = true;
+											}
+											
+											return this.entry;
+										}, 
+										stop: function() {
+											this.entry.value = undefined;
+											this.entry.done = false;
+										}
+									};
 	}
 
-	clear() {
-		let layerElements = this._.$el.querySelectorAll(this._.layerElementTagName);
-		for (let i=0; i<layerElements.length; i++) {
-			let layerElement = layerElements[i];
-			this._remove(layerElement, layerElement.getAttribute(this._.layerElementDatumHashAttribute));
-		}
+	destroy() {
+		this._.activeElsList.clear();
+		this._.unusedElsList.clear();
+		this._.auxElsList.clear();
+
+		this._.$el.remove();
+
+		delete this._;
+		delete this.timeDomain;
+		delete this.valueDomain;
 	}
 
-	update(iterator, clearFirst) {
-		if (clearFirst)
-			this.clear();
+	update(iterator, canOverwrite) {
+		const that = this;
+
+		let alreadyVisible = this.visible;
+
+		if (alreadyVisible) this.visible = false;
 
 		iterator = iterator || this.defaultIterator;
 
-		if (iterator) {
-			iterator.start(this);
-			let entry = iterator.next();
-			while (!entry.done) {
-				let $el = this.allocate_element(entry.value);
-				this.set(entry.value, $el);
-				entry = iterator.next();
-			}
-			iterator.stop();
-		} else {
-			var layerElements = this._.$el.querySelectorAll(this._.layerElementTagName);
+		iterator.start(this);
+		var entry = iterator.next();
+		while (!entry.done) {
+			var $el = this.allocate_element(entry.value);
+			this.set(entry.value, $el);
+			entry = iterator.next();
+		}
+		iterator.stop();
 
-			for (let i=0; i<layerElements.length; i++) {
-				let datum = this.get_datum(layerElements[i].getAttribute(this._.layerElementDatumHashAttribute));
-				let $el = this.allocate_element(datum);
-				this.set(datum, $el);
+		if (canOverwrite) {
+			while (this._.activeDomEls.size > 0) {
+				var $el = this._.activeDomEls.pop();
+				this._remove($el, $el.getAttribute(this._.layerElementDatumHashAttribute));
+			}
+
+			while (this._.auxElsList.size > 0) {
+				var $el = this._.auxElsList.pop();
+				this._.activeDomEls.push($el);
 			}
 		}
+
+		if (alreadyVisible) this.visible = true;
 	}
 
 	set(datum, $el) {
@@ -185,6 +197,8 @@ class Layer {
 
 		if (!$el.parentElement) 
 			this._.layerElementsParent.appendChild($el);
+
+		$el.style.display = "none";
 
 		return $el;
 	}
@@ -213,15 +227,26 @@ class Layer {
 		throw new Error('not implemented');
 	}
 
+	create_element() {
+		return document.createElement(this._.layerElementTagName);
+	}
+
 	/*
 	 *
 	 */
-	allocate_element(datum) {
-		let hash = this.get_hash(datum);
-
-		let $el = this.get_element(hash) || 
+	allocate_element(datum, canOverwrite) {
+		if (canOverwrite === true) {
+			$el = this._.activeElsList.pop() || 
 					this._.unusedElsList.pop() || 
-					document.createElement(this._.layerElementTagName);
+					this.create_element();
+			this._.auxElsList.push($el);
+		} else {
+			$el = this.get_element(this.get_hash(datum)) || 
+					this._.unusedElsList.pop() || 
+					this.create_element();
+			if ($el.getAttribute('unused') === 'true')
+				this._.activeElsList.push($el);
+		}
 
 		this.associate_element_to($el, this.get_hash(datum));
 
@@ -233,7 +258,8 @@ class Layer {
 	 */
 	associate_element_to($el, hash) {
 		$el.setAttribute(this._.layerElementDatumHashAttribute, hash);
-		$el.datum = this.get_datum(hash);
+		$el.setAttribute('unused', false);
+		// $el.datum = this.get_datum(hash);
 	}
 
 	/*
@@ -248,7 +274,7 @@ class Layer {
 	 */
 	unassociate_element_to($el, hash) {
 		$el.removeAttribute(this._.layerElementDatumHashAttribute);
-		delete $el.datum;
+		// delete $el.datum;
 	}
 
 	accessor(id, fn) {
@@ -358,6 +384,20 @@ class Layer {
 		}
 	}
 
+	get visible() {
+		if (this._.$el.style.display === "none") 
+			return false;
+		else
+			return true;
+	}
+
+	set visible(v) {
+		if (v) 
+			this._.$el.style.display = "block";
+		else
+			this._.$el.style.display = "none";
+	}
+
 	get valueDomain() {
 		return this._.valueDomainProxy;
 	}
@@ -418,14 +458,6 @@ class Layer {
 		} else {
 			this._.$el.style.pointerEvents = 'auto';
 		}
-	}
-
-	on(eventType, listenerFn) {
-		this._.$el.addEventListener(eventType, listenerFn);
-	}
-
-	off(eventType, listenerFn) {
-		this._.$el.removeEventListener(eventType, listenerFn);
 	}
 
 }

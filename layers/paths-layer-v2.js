@@ -80,14 +80,12 @@ class PathsLayer extends Layer {
 		return $path;
 	}
 
+	create_element() {
+		return document.createElementNS("http://www.w3.org/2000/svg", this._.layerElementTagName);
+	}
+
 	allocate_element(datum) {
-		let hash = this.get_hash(datum);
-
-		let $path = this.get_element(hash) || 
-					this._.unusedElsList.pop() || 
-					document.createElementNS("http://www.w3.org/2000/svg", this._.layerElementTagName);
-
-		this.associate_element_to($path, this.get_hash(datum));
+		let $path = super.allocate_element(datum);
 
 		$path.safk = $path.safk || {};
 

@@ -137,14 +137,12 @@ class PointsLayer extends Layer {
 		return $group;
 	}
 
+	create_element() {
+		return document.createElementNS("http://www.w3.org/2000/svg", this._.layerElementTagName);
+	}
+
 	allocate_element(datum) {
-		let hash = this.get_hash(datum);
-
-		let $group = this.get_element(hash) || 
-					this._.unusedElsList.pop() || 
-					document.createElementNS("http://www.w3.org/2000/svg", this._.layerElementTagName);
-
-		this.associate_element_to($group, this.get_hash(datum));
+		let $group = super.allocate_element(datum);
 
 		$group.safk = $group.safk || {};
 
