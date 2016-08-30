@@ -1,27 +1,12 @@
 'use strict'
 
-// import { Layer } from 'layer.js';
+// import { SegmentsLayer } from 'segments-layer.js';
 
-class WaveformsLayer extends Layer {
+class WaveformSegmentsLayer extends SegmentsLayer {
 
 	constructor(params) {
-		super({
-			height: params.height || 100, 
-			width: params.width || 500, 
-			defaultIterator: undefined, 
-			timeDomain: params.timeDomain || [0, 20], 
-			valueDomain: params.valueDomain || [-1, 1], 
-			layerTagName: 'layer', 
-			layerElementTagName: 'waveform-segment', 
-			layerElementDatumHashAttribute: 'data-hash'
-		});
+		super(params);
 
-		this.accessor('time', (d) => { 
-			return d.time; 
-		});
-		this.accessor('duration', (d) => { 
-			return d.duration;
-		});
 		this.accessor('channelData', (d, channelNumber) => {
 			return new Float32Array(0);
 		});
@@ -36,24 +21,6 @@ class WaveformsLayer extends Layer {
 		});
 		this.accessor('refresh', (d) => {
 			return false;
-		});
-		this.accessor('color', (d, elementName) => {
-			/*
-			 * 'right-handler' 'left-handler' 'bottom-handler' 
-			 * 'top-handler' 'segment' 'waveform' 'text' 
-			 * 'header'
-			 */
-			if (elementName === 'segment')
-				return "rgb(255,255,255)";
-			else
-				return 'cyan';
-		});
-		this.accessor('width', (d, elementName) => {
-			/*
-			 * 'right-handler' 'left-handler' 'bottom-handler' 
-			 * 'top-handler' 'waveform' 
-			 */
-			return 1;
 		});
 		this.accessor('text', (d) => { 
 			return '';
@@ -90,22 +57,6 @@ class WaveformsLayer extends Layer {
 				default: return 1;
 			}
 			return (d.zIndex !== undefined)? d.zIndex : 1;
-		});
-		this.accessor('opacity', (d, elementName) => { 
-			/*
-			 * 'right-handler' 'left-handler' 'bottom-handler' 
-			 * 'top-handler' 'waveform' 'text' 
-			 * 'header' 'segment'
-			 */
-			return (d.opacity !== undefined)? d.opacity : 1;
-		});
-		this.accessor('visible', (d, elementName) => { 
-			/*
-			 * 'right-handler' 'left-handler' 'bottom-handler' 
-			 * 'top-handler' 'waveform' 'text' 
-			 * 'header' 'segment'
-			 */
-			return (d.visible !== undefined)? d.visible : true; 
 		});
 
 		this._.waveformValueToPixel = linear().domain([-1, 1]).range([0, this.height]);
@@ -191,85 +142,6 @@ class WaveformsLayer extends Layer {
 		});
 	}
 
-	_configure_segment(segment, datum) {
-		segment.style.position = "absolute";
-		segment.style.overflow = "hidden";
-		segment.style.width = this._.timeToPixel(this._.accessors.duration(datum) + this._.timeDomain[0]) + "px";
-		segment.style.left = this._.timeToPixel(this._.accessors.time(datum)) + "px";
-		segment.style.bottom = "0px"
-		segment.style.height = segment.parentElement.style.height;
-		segment.style.zIndex = this._.accessors.zIndex(datum, 'segment');
-		segment.style.opacity = this._.accessors.opacity(datum, 'segment');
-		segment.style.display = (this._.accessors.visible(datum, 'segment'))? 'block' : 'none';
-		segment.style.zIndex = this._.accessors.zIndex(datum, 'segment');
-		segment.style.backgroundColor = this._.accessors.color(datum, 'segment');
-
-		return segment;
-	}
-
-	_configure_left_handler(leftHandler, datum) {
-		leftHandler.setAttribute('left-handler', true);
-		leftHandler.setAttribute('handler', 'left');
-		leftHandler.style.height = "100%";
-		leftHandler.style.bottom = "0px";
-		leftHandler.style.left = "0px";
-		leftHandler.style.width = this._.accessors.width(datum, 'left-handler') + "px";
-		leftHandler.style.backgroundColor = this._.accessors.color(datum, 'left-handler');
-		leftHandler.style.position = "absolute";
-		leftHandler.style.opacity = this._.accessors.opacity(datum, 'left-handler');
-		leftHandler.style.zIndex = this._.accessors.zIndex(datum, 'left-handler');
-		leftHandler.style.display = (this._.accessors.visible(datum, 'left-handler'))? 'block' : 'none';
-
-		return leftHandler;
-	}
-
-	_configure_right_handler(rightHandler, datum) {
-		rightHandler.setAttribute('right-handler', true);
-		rightHandler.setAttribute('handler', 'right');
-		rightHandler.style.height = "100%";
-		rightHandler.style.bottom = "0px";
-		rightHandler.style.left = (this._.timeToPixel(this._.accessors.duration(datum) + this._.timeDomain[0]) - this._.accessors.width(datum, 'right-handler')) + "px";
-		rightHandler.style.width = this._.accessors.width(datum, 'right-handler') + "px";
-		rightHandler.style.backgroundColor = this._.accessors.color(datum, 'right-handler');
-		rightHandler.style.position = "absolute";
-		rightHandler.style.opacity = this._.accessors.opacity(datum, 'right-handler');
-		rightHandler.style.zIndex = this._.accessors.zIndex(datum, 'right-handler');
-		rightHandler.style.display = (this._.accessors.visible(datum, 'right-handler'))? 'block' : 'none';
-
-		return rightHandler;
-	}
-
-	_configure_top_handler(topHandler, datum) {
-		topHandler.setAttribute('top-handler', true);
-		topHandler.setAttribute('handler', 'top');
-		topHandler.style.height = this._.accessors.width(datum, 'top-handler') + "px";
-		topHandler.style.left = "0px";
-		topHandler.style.width = "100%";
-		topHandler.style.backgroundColor = this._.accessors.color(datum, 'top-handler');
-		topHandler.style.position = "absolute";
-		topHandler.style.opacity = this._.accessors.opacity(datum, 'top-handler');
-		topHandler.style.zIndex = this._.accessors.zIndex(datum, 'top-handler');
-		topHandler.style.display = (this._.accessors.visible(datum, 'top-handler'))? 'block' : 'none';
-
-		return topHandler;
-	}
-
-	_configure_bottom_handler(bottomHandler, datum) {
-		bottomHandler.setAttribute('bottom-handler', true);
-		bottomHandler.setAttribute('handler', 'bottom');
-		bottomHandler.style.height = this._.accessors.width(datum, 'bottom-handler') + "px";
-		bottomHandler.style.bottom = "0px";
-		bottomHandler.style.left = "0px";
-		bottomHandler.style.width = "100%";
-		bottomHandler.style.backgroundColor = this._.accessors.color(datum, 'bottom-handler');
-		bottomHandler.style.position = "absolute";
-		bottomHandler.style.opacity = this._.accessors.opacity(datum, 'bottom-handler');
-		bottomHandler.style.zIndex = this._.accessors.zIndex(datum, 'bottom-handler');
-		bottomHandler.style.display = (this._.accessors.visible(datum, 'bottom-handler'))? 'block' : 'none';
-
-		return bottomHandler;
-	}
-
 	_configure_header(header, datum) {
 		header.style.height = this._.accessors.width(datum, 'header') + "px";
 		header.style.left = "0px";
@@ -314,35 +186,15 @@ class WaveformsLayer extends Layer {
 
 		if (waveform.childElementCount === 0) {
 			image = document.createElement('img');
-			// canvas = document.createElement('canvas');
 			
 			waveform.appendChild(image);
-			// waveform.appendChild(canvas);
 		} else {
 			image = waveform.querySelector('img');
-			// canvas = waveform.querySelector('canvas');
 		}
 
 		if (refresh) {
 			waveform.setAttribute('do-rendering', true);
-			// this._render_waveform(datum, outerHTML).then(this._convert_canvas_to_image(image));
 		}
-
-		// canvas.style.position = "absolute";
-		// canvas.style.left = "0";
-		// canvas.style.top = "0";
-		// canvas.width = width;
-		// canvas.height = height;
-		// canvas.style.zIndex = -1;
-		// canvas.style.pointerEvents = "none";
-		// canvas.onselectstart = () => { return false; };
-		// canvas.onmousedown = () => { return false; };
-		// canvas.unselectable = "on";
-		// canvas.style.mozUserSelect = "mozNone";
-		// canvas.style.khtmlUserSelect = "none";
-		// canvas.style.webkitUserSelect = "none";
-		// canvas.style.oUserSelect = "none";
-		// canvas.style.userSelect = "none";
 
 		image.style.position = "absolute";
 		image.style.left = "0";
@@ -378,16 +230,6 @@ class WaveformsLayer extends Layer {
 	set(datum, $segment) {
 		$segment = super.set(datum, $segment);
 
-		this._configure_segment($segment, datum);
-
-		this._configure_left_handler($segment.safk.leftHandler, datum);
-
-		this._configure_right_handler($segment.safk.rightHandler, datum);
-
-		this._configure_top_handler($segment.safk.topHandler, datum);
-
-		this._configure_bottom_handler($segment.safk.bottomHandler, datum);
-
 		this._configure_header($segment.safk.header, datum);
 
 		this._configure_waveform($segment.safk.waveform, datum);
@@ -405,14 +247,6 @@ class WaveformsLayer extends Layer {
 		if (!$segment.safk.header) $segment.appendChild($segment.safk.header = document.createElement('header'));
 
 		if (!$segment.safk.waveform) $segment.appendChild($segment.safk.waveform = document.createElement('waveform'));
-
-		if (!$segment.safk.leftHandler) $segment.appendChild($segment.safk.leftHandler = document.createElement('handler'));
-
-		if (!$segment.safk.rightHandler) $segment.appendChild($segment.safk.rightHandler = document.createElement('handler'));
-
-		if (!$segment.safk.topHandler) $segment.appendChild($segment.safk.topHandler = document.createElement('handler'));
-
-		if (!$segment.safk.bottomHandler) $segment.appendChild($segment.safk.bottomHandler = document.createElement('handler'));
 
 		if (!$segment.safk.waveformOverlay) $segment.appendChild($segment.safk.waveformOverlay = document.createElement('waveform-overlay'));
 

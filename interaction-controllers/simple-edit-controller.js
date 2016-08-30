@@ -1,14 +1,22 @@
 'use strict'
 
-class SimpleEditController {
+class SimpleEditController extends EventEmitter {
 	
 	constructor(params) {
-		this._ = {};
+		super();
 		const that = this;
+		this._ = {};
 		this._.layer = params.layer;
 		this._.lastEventType = undefined;
 		this._.lastCoords = { x: undefined, y: undefined };
 		this._.selectionManager = params.selectionManager || new SelectionManager();
+		this._.accessors = params.accessors || {
+			time: (d, v) => {
+				if (!isNaN(v)) 
+					d.time = v;
+				return d.time;
+			}
+		}
 
 		this._.beingSelected = new List();
 		this._.beingUnselected = new List();
@@ -30,59 +38,73 @@ class SimpleEditController {
 			}
 		};
 
-		this._.mousedown = (e) => {
-			that._.lastEventType = e.type;
-			that._.lastCoords.x = e.clientX;
-			that._.lastCoords.y = e.clientY;
+		this._on_mousedown = (e) => {
+			this._.lastEventType = e.type;
+			this._.lastCoords.x = e.clientX;
+			this._.lastCoords.y = e.clientY;
+			this._.startingEl = e.target;
 
-			that._.selection_check(e);
+			this._selection_check(e);
 
-			that._.layer.layerDomEl.addEventListener('mousemove', that._.drag);
-			that._.layer.layerDomEl.addEventListener('mouseup', that._.dragend);
+			this._.layer.layerDomEl.addEventListener('mousemove', this._on_drag);
+			this._.layer.layerDomEl.addEventListener('mouseup', this._on_dragend);
 		};
 
-		this._.drag = (e) => {
-			that._.lastEventType = e.type;
+		this._on_drag = (e) => {
+			const that = this;
 
-			that._.layer.layerDomEl.removeEventListener('mousedown', that._.mousedown);
+			let lastEventType = this._.lastEventType;
+
+			if (lastEventType === 'mousedown') 
+				this.emit('start-edit');
+
+			this._.lastEventType = e.type;
+
+			this._.layer.layerDomEl.removeEventListener('mousedown', this._on_mousedown);
 
 			this._.selectionManager.apply_on_selected(this._.layer, (datum) => {
-				let dx = e.clientX - that._.lastCoords.x;
-				let px = that._.layer._.timeToPixel(datum.time);
-				datum.time = that._.layer._.timeToPixel.invert(px + dx);
-				// that._.layer.set(datum);
-				that._.beingSelected.push(datum);
+				let dx = e.clientX - this._.lastCoords.x;
+				let dy = e.clientY - this._.lastCoords.y;
+				this._edit_datum(datum, that._.startingEl, e, dx, dy);
+				this._.beingSelected.push(datum);
 			}, () => {
-				that._.layer.update(that._.updateIterator);
+				this._.layer.update(this._.updateIterator);
 			});
 
-			that._.lastCoords.x = e.clientX;
-			that._.lastCoords.y = e.clientY;
+			this._.lastCoords.x = e.clientX;
+			this._.lastCoords.y = e.clientY;
+
+			this.emit('edit');
 		};
 
-		this._.dragend = (e) => {
-			that._.lastCoords.x = e.clientX;
-			that._.lastCoords.y = e.clientY;
-			that._.layer.layerDomEl.removeEventListener('mousemove', that._.drag);
-			that._.layer.layerDomEl.removeEventListener('mouseup', that._.dragend);
-			that._.lastEventType = e.type;
+		this._on_dragend = (e) => {
+			let lastEventType = this._.lastEventType;
 
-			that._.layer.layerDomEl.addEventListener('mousedown', that._.mousedown);
-		};
+			this._.startingEl = undefined;
+			this._.lastCoords.x = e.clientX;
+			this._.lastCoords.y = e.clientY;
+			this._.layer.layerDomEl.removeEventListener('mousemove', this._on_drag);
+			this._.layer.layerDomEl.removeEventListener('mouseup', this._on_dragend);
+			this._.lastEventType = e.type;
 
-		this._.selection_check = (e) => {
+			this._.layer.layerDomEl.addEventListener('mousedown', this._on_mousedown);
+
+			if (lastEventType === 'mousemove')
+				this.emit('end-edit');
+		}
+
+		this._selection_check = (e) => {
 			let update = false;
 			if (!e.shiftKey) {
-				this._.selectionManager.unselect_all(this._.layer, (datum) => { that._.beingUnselected.push(datum); });
+				this._.selectionManager.unselect_all(this._.layer, (datum) => { this._.beingUnselected.push(datum); });
 				update = true;
 			} 
 			var datum, 
-				tagName = e.target.tagName, 
 				layerTagName = this._.layer.layerDomEl.tagName;
 
 			var hash = null;
 			var $el = e.target;
-			while (hash === null && tagName !== layerTagName) {
+			while (hash === null && $el.tagName !== layerTagName) {
 				hash = $el.getAttribute(this._.layer._.layerElementDatumHashAttribute);
 				$el = $el.parentElement;
 			}
@@ -91,14 +113,28 @@ class SimpleEditController {
 				datum = this._.layer.get_datum(hash);
 
 			if (datum) {
-				that._.selectionManager.select(this._.layer, datum, (datum) => { that._.beingSelected.push(datum); });
+				this._.selectionManager.select(this._.layer, datum, (datum) => { this._.beingSelected.push(datum); });
 				update = true;
 			}
 
 			if (update) 
-				that._.layer.update(that._.updateIterator);
-		};
+				this._.layer.update(this._.updateIterator);
+		}
 
-		this._.layer.layerDomEl.addEventListener('mousedown', this._.mousedown);
+		this._.layer.layerDomEl.addEventListener('mousedown', this._on_mousedown);
+	}
+
+	__edit(datum, accessorName, delta, scale) {
+		let oldValue = this._.accessors[accessorName](datum);
+		let oldCoord = scale(oldValue);
+		let newCoord = oldCoord + delta;
+		let newValue = scale.invert(newCoord);
+
+		return newValue;
+	}
+
+	_edit_datum(datum, startingEl, e, dx, dy) {
+		let newStartTime = this.__edit(datum, 'time', dx, this._.layer._.timeToPixel);
+		(!isNaN(newStartTime)) && this._.accessors.time(datum, newStartTime);
 	}
 }

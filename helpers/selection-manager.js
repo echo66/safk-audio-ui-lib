@@ -1,7 +1,8 @@
 'use strict'
 
-class SelectionManager {
+class SelectionManager extends EventEmitter {
 	constructor() {
+		super();
 		this.selectedData = new Map();
 	}
 
@@ -12,6 +13,7 @@ class SelectionManager {
 			if (!selectedDataOnLayer.has(hash)) {
 				selectedDataOnLayer.add(hash);
 				callback && callback(datum);
+				this.emit('selected', layer, datum);
 			}
 		} else {
 			var hash = layer.get_hash(datum);
@@ -19,6 +21,7 @@ class SelectionManager {
 			this.selectedData.set(layer, selectedDataOnLayer);
 			selectedDataOnLayer.add(hash);
 			callback && callback(datum);
+			this.emit('selected', layer, datum);
 		}
 	}
 
@@ -40,6 +43,7 @@ class SelectionManager {
 			if (selectedDataOnLayer.size === 0) 
 				this.selectedData.delete(layer);
 			callback && callback(datum);
+			this.emit('unselected', layer, datum);
 		}
 	}
 
@@ -59,6 +63,7 @@ class SelectionManager {
 			if (selectedDataOnLayer.size === 0) 
 				this.selectedData.delete(layer);
 			finalCallback && finalCallback();
+			this.emit('unselected-all', layer);
 		}
 	}
 

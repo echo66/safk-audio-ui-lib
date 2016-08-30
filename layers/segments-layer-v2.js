@@ -11,9 +11,9 @@ class SegmentsLayer extends Layer {
 			defaultIterator: undefined, 
 			timeDomain: params.timeDomain || [0, 20], 
 			valueDomain: params.valueDomain || [0, 1], 
-			layerTagName: 'layer', 
-			layerElementTagName: 'segment', 
-			layerElementDatumHashAttribute: 'data-hash'
+			layerTagName: params.layerTagName || 'layer', 
+			layerElementTagName: params.layerElementTagName || 'segment', 
+			layerElementDatumHashAttribute: params.layerElementTagName || 'data-hash'
 		});
 
 		// DEFINE ACCESSORS
@@ -76,19 +76,11 @@ class SegmentsLayer extends Layer {
 				 */
 				return (d.highValue !== undefined)? d.highValue : 1;
 			});
-			this.accessor('innerHTML', (d, outerHTML) => { 
-				/*
-				 */
-				return d.innerHTML;
-			});
 		}
-
-		// this._.datumHashToDOM = new Map();
 		
 	}
 
 	_configure_segment(segment, datum) {
-		segment.removeAttribute('unused');
 		// segment.dataset.hash = hash;
 		// segment.datum = datum;
 		segment.style.overflow = "hidden";
@@ -108,6 +100,7 @@ class SegmentsLayer extends Layer {
 	_configure_left_handler(leftHandler, datum) {
 		// leftHandler.dataset.hash = hash;
 		leftHandler.setAttribute('left-handler', true);
+		leftHandler.setAttribute('handler', 'left');
 		leftHandler.style.height = "100%";
 		leftHandler.style.bottom = "0px";
 		leftHandler.style.left = "0px";
@@ -123,6 +116,7 @@ class SegmentsLayer extends Layer {
 	_configure_right_handler(rightHandler, datum) {
 		// rightHandler.dataset.hash = hash;
 		rightHandler.setAttribute('right-handler', true);
+		rightHandler.setAttribute('handler', 'right');
 		rightHandler.style.height = "100%";
 		rightHandler.style.bottom = "0px";
 		// rightHandler.style.left = (this._.timeToPixel(this._.accessors.duration(datum) + this._.timeDomain[0]) - this._.accessors.width(datum, 'right-handler')) + "px";
@@ -139,6 +133,7 @@ class SegmentsLayer extends Layer {
 	_configure_top_handler(topHandler, datum) {
 		// topHandler.dataset.hash = hash;
 		topHandler.setAttribute('top-handler', true);
+		topHandler.setAttribute('handler', 'top');
 		topHandler.style.height = this._.accessors.width(datum, 'top-handler') + "px";
 		// topHandler.style.bottom = "0px";
 		topHandler.style.left = "0px";
@@ -154,6 +149,7 @@ class SegmentsLayer extends Layer {
 	_configure_bottom_handler(bottomHandler, datum) {
 		// bottomHandler.dataset.hash = hash;
 		bottomHandler.setAttribute('bottom-handler', true);
+		bottomHandler.setAttribute('handler', 'bottom');
 		bottomHandler.style.height = this._.accessors.width(datum, 'bottom-handler') + "px";
 		bottomHandler.style.bottom = "0px";
 		bottomHandler.style.left = "0px";
@@ -178,19 +174,6 @@ class SegmentsLayer extends Layer {
 		return background;
 	}
 
-	_configure_content(content, segment, datum) {
-		// content.dataset.hash = hash;
-		content.style.position = "absolute";
-		content.innerHTML = "";
-		let innerHTML = this._.accessors.innerHTML(datum, segment);
-		if (innerHTML instanceof Node)
-			content.appendChild(innerHTML);
-		content.style.opacity = this._.accessors.opacity(datum, 'content');
-		content.style.display = (this._.accessors.visible(datum, 'content'))? 'block' : 'none';
-
-		return content;
-	}
-
 	set(datum, $segment) {
 		$segment = super.set(datum, $segment);
 
@@ -206,8 +189,6 @@ class SegmentsLayer extends Layer {
 
 		this._configure_background($segment.safk.background, datum);
 
-		this._configure_content($segment.safk.content, $segment, datum);
-
 		return $segment;
 	}
 
@@ -217,8 +198,6 @@ class SegmentsLayer extends Layer {
 		$segment.safk = $segment.safk || {};
 
 		if (!$segment.safk.background) $segment.appendChild($segment.safk.background = document.createElement('background'));
-
-		if (!$segment.safk.content) $segment.appendChild($segment.safk.content = document.createElement('content'));
 
 		if (!$segment.safk.leftHandler) $segment.appendChild($segment.safk.leftHandler = document.createElement('handler'));
 

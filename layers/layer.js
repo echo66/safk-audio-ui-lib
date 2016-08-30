@@ -195,10 +195,10 @@ class Layer {
 		if (!$el)
 			$el = this.allocate_element(datum, $el);
 
+		$el.style.display = "none";
+
 		if (!$el.parentElement) 
 			this._.layerElementsParent.appendChild($el);
-
-		$el.style.display = "none";
 
 		return $el;
 	}
@@ -235,6 +235,7 @@ class Layer {
 	 *
 	 */
 	allocate_element(datum, canOverwrite) {
+		var $el;
 		if (canOverwrite === true) {
 			$el = this._.activeElsList.pop() || 
 					this._.unusedElsList.pop() || 
@@ -244,7 +245,8 @@ class Layer {
 			$el = this.get_element(this.get_hash(datum)) || 
 					this._.unusedElsList.pop() || 
 					this.create_element();
-			if ($el.getAttribute('unused') === 'true')
+			var unused = $el.getAttribute('unused');
+			if (unused === 'true' || unused === null)
 				this._.activeElsList.push($el);
 		}
 

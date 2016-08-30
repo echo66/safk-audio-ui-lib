@@ -2,10 +2,14 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../utils/event-emitter.js"></script>
 		<script type="text/javascript" src="../linear-scale.js"></script>
 		<script type="text/javascript" src="../layers/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/points-layer-v2.js"></script>
+		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-point-edit-controller.js"></script>
 	</head>
 
 	<body>
@@ -47,11 +51,6 @@
 
 			track1.appendChild(l1.layerDomEl);
 
-
-			let lastEventType = undefined;
-			let lastCoords = { x: undefined, y: undefined };
-			let selectedDatums = new Set();
-
 			l1.get_datum = (hash) => {
 				for (let i=0; i<data.length; i++) 
 					if ((data[i].id + "") === hash)
@@ -64,109 +63,11 @@
 
 			data.forEach((datum) => l1.set(datum));
 
-			l1.accessor('text', (d) => {
-				return d.value;
+			var editController = new SimplePointEditController({ 
+				layer: l1, 
+				allowXEdit: true, 
+				allowYEdit: true
 			});
-
-			l1.accessor('textOffset', (d, axis) => {
-				switch (axis) {
-					case 'x':
-					case 'y':
-						return 3;
-				}
-			});
-
-			l1.accessor('fontSize', (d) => {
-				return 5;
-			});
-
-			l1.accessor('color', (d, elementName) => {
-				switch (elementName) {
-					case 'point': return 'blue';
-					case 'text': return 'black';
-				}
-			});
-
-			l1.accessor('radius', (d) => {
-				if (selectedDatums.has(d))
-					return 5;
-				else 
-					return 2;
-			});
-
-
-			
-
-			let mousedown = (e) => {
-				lastEventType = e.type;
-				lastCoords.x = e.clientX;
-				lastCoords.y = e.clientY;
-
-				selectioncheck(e);
-
-				l1.on('mousemove', drag);
-				l1.on('mouseup', dragend);
-
-				console.log('mousedown');
-			};
-
-			let drag = (e) => {
-				if (lastEventType === 'mousemove')
-					console.log('drag');
-				else if (lastEventType === 'mousedown')
-					console.log('start drag');
-				lastEventType = e.type;
-
-				l1.off('mousedown', mousedown);
-
-				selectedDatums.forEach((datum) => {
-					let dx = e.clientX - lastCoords.x;
-					let dy = e.clientY - lastCoords.y;
-					let px = l1._.timeToPixel(datum.time);
-					let py = l1._.valueToPixel(datum.value);
-					datum.time = l1._.timeToPixel.invert(px + dx);
-					datum.value = l1._.valueToPixel.invert(py - dy);
-					l1.set(datum);
-				});
-
-				lastCoords.x = e.clientX;
-				lastCoords.y = e.clientY;
-			};
-
-			let dragend = (e) => {
-				lastCoords.x = e.clientX;
-				lastCoords.y = e.clientY;
-				l1.off('mousemove', drag);
-				l1.off('mouseup', dragend);
-				console.log('end drag');
-				lastEventType = e.type;
-
-				l1.on('mousedown', mousedown);
-				// targetDatum = undefined;
-			};
-
-			let selectioncheck = (e) => {
-				if (!e.shiftKey) {
-					selectedDatums.clear();
-					console.log('unselected all');
-				} 
-				var datum, 
-					tagName = e.target.tagName.toLowerCase();
-
-				if (tagName === 'segment') {
-					datum = e.target.datum;
-				} else {
-					datum = e.target.parentElement.datum;
-				}
-
-				if (datum) {
-					selectedDatums.add(datum);
-				}
-
-				l1.update();
-			};
-
-			l1.on('mousedown', mousedown);
 
 		</script>
 		

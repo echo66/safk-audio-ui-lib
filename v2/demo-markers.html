@@ -3,6 +3,7 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../utils/event-emitter.js"></script>
 		<script type="text/javascript" src="../layers/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/markers-layer-v2.js"></script>
@@ -67,6 +68,10 @@
 			var selectionManager = new SelectionManager();
 
 			var editController = new SimpleEditController({ layer: l1 });
+
+			editController.on('start-edit', () => console.log('start-edit'));
+			editController.on('edit', () => console.log('edit'));
+			editController.on('end-edit', () => console.log('end-edit'));
 
 			// l1.layerDomEl.style["overflow-x"] = "scroll";
 			// l1.layerDomEl.style["height"] = "110px";

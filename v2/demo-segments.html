@@ -2,35 +2,20 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../utils/event-emitter.js"></script>
 		<script type="text/javascript" src="../linear-scale.js"></script>
 		<script type="text/javascript" src="../layers/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
-		<script type="text/javascript" src="../interaction-controllers/edit-controller.js"></script>
-
-		<style type="text/css">
-
-			/*layer {
-				overflow: hidden; 
-				top: 0px; 
-				position: absolute; 
-				height: 30px; 
-				width: 500px; 
-				background-color: none;
-			}
-
-			segment {
-				position: absolute; 
-				width: 60px; 
-				height: 30px; 
-				/*background-color: green;*/
-			}*/
-		</style>
+		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-segment-edit-controller.js"></script>
+		<script type="text/javascript" src="../helpers/time-scroller.js"></script>
 	</head>
 
 	<body>
-		<div id="track1" style="position: relative; height: 100px; width: 500px;">
-		</div>
+		<div id="track1" style="position: relative; height: 100px; width: 1000px;"></div>
+		<div id="scroller"></div>
 
 		<script type="text/javascript">
 			var data = [
@@ -122,64 +107,19 @@
 
 			data.forEach((datum) => l1.set(datum));
 
-			var editController = new EditController({ layer: l1 });
-
-			l1._.accessors.color = (d, elementName) => {
-				switch (elementName) {
-					case 'background': 
-						if (editController.selectedData.has(d))
-							return 'red';
-						else 
-							return 'cyan';
-					case 'right-handler': 
-					case 'left-handler': 
-					case 'bottom-handler': 
-					case 'top-handler': 
-						return (d.handlerColor !== undefined)? d.handlerColor : 'blue';
-				}
-			};
-
-			l1._.accessors.width = (d, elementName) => {
-				if (editController.selectedData.has(d)) 
-					return 5;
-				else 
-					return 2;
-			};
-
-			l1._.accessors.zIndex = (d, elementName) => {
-				switch (elementName) {
-					case 'segment': 
-						if (editController.selectedData.has(d))
-							return 2;
-						else 
-							return 1
-					case 'right-handler': 
-					case 'left-handler': 
-					case 'bottom-handler': 
-					case 'top-handler': 
-					case 'background': 
-					case 'content': 
-						return (d.zIndex !== undefined)? d.zIndex : 1;
-				}
-			};
+			var editController = new SimpleSegmentEditController({ 
+				layer: l1, 
+				allowXEdit: true, 
+				allowYEdit: true
+			});
 
 
-			l1.layerDomEl.addEventListener("touchstart", (e) => { console.log('touchstart'); }, false);
-			l1.layerDomEl.addEventListener("touchend", (e) => { console.log('touchend'); }, false);
-			l1.layerDomEl.addEventListener("touchcancel", (e) => { console.log('touchcancel'); }, false);
-			l1.layerDomEl.addEventListener("touchmove", (e) => { console.log('touchmove'); }, false);
-
-
-
-
-			var back = document.createElement('button');
-			var forw = document.createElement('button');
-
-			back.innerHTML = "-0.1";
-			forw.innerHTML = "+0.1";
-
-			document.body.appendChild(back);
-			document.body.appendChild(forw);
+			var scroller = new TimeScroller({
+				height: 10, width: 800
+			});
+			scroller.availableTimeRange = [0, 1000];
+			scroller.add_target_layer(l1);
+			document.getElementById('scroller').appendChild(scroller.layerDomEl);
 
 
 		</script>

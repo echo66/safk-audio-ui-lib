@@ -2,12 +2,15 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../utils/event-emitter.js"></script>
 		<script type="text/javascript" src="../linear-scale.js"></script>
 		<script type="text/javascript" src="../layers/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
-		<script type="text/javascript" src="../layers/waveforms-layer-v2.js"></script>
 		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
-		<script type="text/javascript" src="../interaction-controllers/edit-controller.js"></script>
+		<script type="text/javascript" src="../layers/waveforms-layer-v2.js"></script>
+		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-segment-edit-controller.js"></script>
 		<script type="text/javascript" src="../helpers/time-scroller.js"></script>
 
 		<script src='https://mohayonao.github.io/timbre.js/timbre.dev.js'></script>
@@ -99,8 +102,8 @@
 					id: i, 
 					time: i*10, 
 					duration: 10, 
-					bufferStart: (i)*50000 + 1, 
-					bufferEnd: (i+1)*50000
+					bufferStart: (i) * 44000 + 1, 
+					bufferEnd: (i+1) * 44000
 				})
 			}
 
@@ -218,7 +221,7 @@
 					data.forEach((datum) => l1.set(datum));
 				});
 
-			var editController = new EditController({ layer: l1 });
+			var editController = new SimpleSegmentEditController({ layer: l1, allowXEdit: true, allowYEdit: true });
 
 			var scroller = new TimeScroller({
 				height: 10, width: 800

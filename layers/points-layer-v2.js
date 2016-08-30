@@ -109,6 +109,8 @@ class PointsLayer extends Layer {
 													this._.timeToPixel(this._.accessors.time(datum)) + ' ' + 
 													this._.valueToPixel(this._.accessors.value(datum)) + ') ' + 
 													'scale(1,-1)');
+		group.style.display = (this._.accessors.visible(datum, 'group'))? 'block' : 'none';
+		group.style.zIndex = this._.accessors.zIndex(datum, 'group');
 	}
 
 	_configure_text(text, datum) {
