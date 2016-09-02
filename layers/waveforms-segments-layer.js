@@ -32,8 +32,11 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 		this.accessor('fontSize', (d) => { 
 			return 5;
 		});
-		this.accessor('waveformDetail', (d) => {
+		this.accessor('waveformDetail', (d, $waveform) => {
 			return 500;
+		});
+		this.accessor('allowWaveformReDraw', (d) => {
+			return true;
 		});
 
 		this.accessor('zIndex', (d, elementName) => { 
@@ -58,47 +61,18 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 
 		this._.canvas = document.createElement('canvas');
 
-		const that = this;
+		WaveformSegmentsLayer.renderingController.add_layer(this);
+	}
 
-		let timeoutFn = () => {
-			var $waveform = that._.$el.querySelector("waveform[do-rendering]");
+	destroy() {
+		super.destroy();
 
-			if ($waveform) {
-
-				$waveform.removeAttribute("do-rendering");
-
-				// var canvas = $waveform.querySelector('canvas');
-				var $image = $waveform.querySelector('img');
-				var canvas = that._.canvas;
-				var hash = $waveform.parentElement.getAttribute('data-hash');
-				var datum = that.get_datum(hash);
-
-				// that._render_waveform(datum, canvas, $waveform.parentElement)
-				// 		.then(that._convert_canvas_to_image($image, canvas));
-
-				that._render_waveform(
-										that._.accessors.bufferStart(datum), that._.accessors.bufferEnd(datum), 
-										that._.accessors.sampleRate(datum), 
-										that._.accessors.channelData(datum, 0), undefined, 
-										that._.accessors.color(datum, 'waveform'), that._.accessors.width(datum, 'waveform'), 
-										that._.accessors.waveformDetail(datum), 
-										Number($waveform.parentElement.style.height.substring(0, $waveform.parentElement.style.height.length-2)), 
-										canvas
-									).then((renderingResult) => {
-										that._convert_canvas_to_image(canvas, $image).then(($image) => {
-											WaveformSegmentsLayer.renderingController.mark_as_rendered(that, $waveform, renderingResult);
-										});
-									});
-			}
-			setTimeout(timeoutFn, 250);
-		};
-
-		setTimeout(timeoutFn, 250);
+		WaveformSegmentsLayer.renderingController.remove_layer(this);
 	}
 
 	_convert_canvas_to_image($canvas, $image) {
 		return new Promise((resolve, reject) => {
-			var dataURL = $canvas.toDataURL();
+			var dataURL = $canvas.toDataURL('image/png');
 			$image.src = dataURL;
 
 			$image.style.pointerEvents = "none";
@@ -125,7 +99,7 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 
 			var numSamples = bufferEnd - bufferStart;
 			// $canvas.width = Math.min(waveformDetail, numSamples);
-			$canvas.width = waveformDetail;
+			$canvas.width = Math.min(waveformDetail, 5000);
 			$canvas.height = height;
 			var numPixels  = $canvas.width;
 
@@ -288,23 +262,81 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 			$image.setAttribute('current-waveform-line-width', '');
 			$image.setAttribute('current-waveform-detail', '');
 			$image.setAttribute('current-time-units-per-pixel', '');
+			$image.setAttribute('waveform-drawn', '');
 		}
 	}
 }
 
 class WaveformsRenderingController {
-	constructor() {}
+	constructor() {
+		this.controlledLayers = [];
+		this.index = 0;
+
+		const renderingController = this;
+
+		let timeoutFn = () => {
+			var layer = renderingController._get_a_layer();
+
+			if (layer) {
+				var $waveform = layer.layerDomEl.querySelector("waveform[do-rendering]");
+
+				if ($waveform) {
+
+					$waveform.removeAttribute("do-rendering");
+
+					var $image = $waveform.querySelector('img');
+					var canvas = layer._.canvas;
+					var hash = $waveform.parentElement.getAttribute('data-hash');
+					var datum = layer.get_datum(hash);
+
+					layer._render_waveform(
+											layer._.accessors.bufferStart(datum), layer._.accessors.bufferEnd(datum), 
+											layer._.accessors.sampleRate(datum), 
+											layer._.accessors.channelData(datum, 0), undefined, 
+											layer._.accessors.color(datum, 'waveform'), layer._.accessors.width(datum, 'waveform'), 
+											layer._.accessors.waveformDetail(datum, $waveform), 
+											Number($waveform.parentElement.style.height.substring(0, $waveform.parentElement.style.height.length-2)), 
+											canvas
+										).then((renderingResult) => {
+											layer._convert_canvas_to_image(canvas, $image).then(($image) => {
+												WaveformSegmentsLayer.renderingController.mark_as_rendered(layer, $waveform, renderingResult);
+											});
+										});
+				}
+			}
+
+			setTimeout(timeoutFn, 250);
+		};
+
+		setTimeout(timeoutFn, 250);
+	}
+
+	_get_a_layer() {
+		if (this.controlledLayers.length === 0) {
+			return undefined;
+		}
+
+		if (this.index >= this.controlledLayers.length) {
+			this.index = 0;
+		}
+
+		return this.controlledLayers[this.index++];
+	}
 
 	request_render(layer, $waveform, datum) {
+
+		var $image = $waveform.querySelector('img');
+
+		var waveformDrawn 			= $image.getAttribute('waveform-drawn');
+
+		if (!layer._.accessors.allowWaveformReDraw(datum)) return;
 
 		var newBufferStart 			= layer._.accessors.bufferStart(datum);
 		var newBufferEnd 			= layer._.accessors.bufferEnd(datum);
 		var newSampleRate 			= layer._.accessors.sampleRate(datum);
 		var newLineColor 			= layer._.accessors.color(datum, 'waveform');
 		var newLineWidth 			= layer._.accessors.width(datum, 'waveform');
-		var newDetail 				= layer._.accessors.waveformDetail(datum);
-
-		var $image = $waveform.querySelector('img');
+		var newDetail 				= layer._.accessors.waveformDetail(datum, $waveform);
 
 		var curBufferStart 			= Number($image.getAttribute('current-buffer-start'));
 		var curBufferEnd 			= Number($image.getAttribute('current-buffer-end'));
@@ -313,26 +345,24 @@ class WaveformsRenderingController {
 		var curLineWidth 			= Number($image.getAttribute('current-waveform-line-width'));
 		var curDetail 				= Number($image.getAttribute('current-waveform-detail'));
 
-		if (curBufferStart 		!== newBufferStart 	|| 
-				curBufferEnd 	!== newBufferEnd 	|| 
-				curSampleRate 	!== newSampleRate 	|| 
-				curLineColor 	!== newLineColor 	|| 
-				curLineWidth 	!== newLineWidth 	|| 
-				curDetail 		!== newDetail) {
+		if ((curBufferStart 		!== newBufferStart 	|| 
+					curBufferEnd 	!== newBufferEnd 	|| 
+					curSampleRate 	!== newSampleRate 	|| 
+					curLineColor 	!== newLineColor 	|| 
+					curLineWidth 	!== newLineWidth 	|| 
+					curDetail 		!== newDetail) && !this.is_scheduled_for_rendering($waveform)) {
 
-			console.log('refreshing');
+			this.schedule_for_render($waveform);
 
-			$waveform.setAttribute('do-rendering', true);
+			return;
 
-		} else {
+		} 
 
-			var outerHTML = $waveform.parentElement;
-			var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
-			var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
-			$image.width = width;
-			$image.height = height;
-
-		}
+		var outerHTML = $waveform.parentElement;
+		var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
+		var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
+		$image.width = width;
+		$image.height = height;
 	}
 
 	mark_as_rendered(layer, $waveform, renderingResult) {
@@ -344,12 +374,38 @@ class WaveformsRenderingController {
 		$image.setAttribute('current-waveform-line-color', renderingResult.waveformLineColor);
 		$image.setAttribute('current-waveform-line-width', renderingResult.waveformLineWidth);
 		$image.setAttribute('current-waveform-detail', renderingResult.waveformDetail);
+		$image.setAttribute('waveform-drawn', 'true');
 
 		var outerHTML = $waveform.parentElement;
 		var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
 		var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
 		$image.width = width;
 		$image.height = height;
+	}
+
+	add_layer(layer) {
+		for (var i=0; i<this.controlledLayers.length; i++) {
+			if (this.controlledLayers[i] === layer) 
+				return;
+		}
+		this.controlledLayers.push(layer);
+	}
+
+	remove_layer(layer) {
+		for (var i=0; i<this.controlledLayers.length; i++) {
+			if (this.controlledLayers[i] === layer) {
+				this.controlledLayers.slice(i, 1);
+				return;
+			}
+		}
+	}
+
+	is_scheduled_for_rendering($waveform) {
+		return $waveform.getAttribute('do-rendering') === 'true';
+	}
+
+	schedule_for_render($waveform) {
+		$waveform.setAttribute('do-rendering', true);
 	}
 }
 

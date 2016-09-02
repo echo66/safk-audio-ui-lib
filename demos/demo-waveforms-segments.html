@@ -44,7 +44,7 @@
 
 			var data = [];
 
-			for (var i=0; i<10; i++) {
+			for (var i=0; i<100; i++) {
 				data.push({
 					id: i, 
 					time: i*10, 
@@ -123,8 +123,11 @@
 				}
 			});
 
-			l1.accessor('waveformMaxDetail', (d, elementName) => {
-				return 1000;
+			l1.accessor('waveformDetail', (d, $waveform) => {
+				// var outerHTML = $waveform.parentElement;
+				// var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
+				// return width;
+				return 500;
 			});
 
 			l1.accessor('width', (d, elementName) => {
@@ -170,14 +173,8 @@
 					return 1;
 			});
 
-			l1.accessor('visible', (d, elementName) => {
-				if (elementName === 'waveform') {
-					if (editController.is_editing(l1, d)) {
-						return false;
-					}
-					
-				}
-				return true;
+			l1.accessor('allowWaveformReDraw', (d) => {
+				return !editController.is_editing(l1, d);
 			});
 
 			var audioCtx = new AudioContext();
