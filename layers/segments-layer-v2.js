@@ -83,7 +83,7 @@ class SegmentsLayer extends Layer {
 	_configure_segment(segment, datum) {
 		// segment.dataset.hash = hash;
 		// segment.datum = datum;
-		segment.style.overflow = "hidden";
+		// segment.style.overflow = "hidden";
 		segment.style.position = "absolute";
 		// segment.style.width = this._.timeToPixel(this._.accessors.duration(datum) + this._.timeDomain[0]) + "px";
 		segment.style.width = this._.timeToPixel(this._.accessors.duration(datum)) + "px";
@@ -107,6 +107,7 @@ class SegmentsLayer extends Layer {
 		leftHandler.style.width = this._.accessors.width(datum, 'left-handler') + "px";
 		leftHandler.style.backgroundColor = this._.accessors.color(datum, 'left-handler');
 		leftHandler.style.position = "absolute";
+		leftHandler.style.zIndex = this._.accessors.zIndex(datum, 'left-handler');
 		leftHandler.style.opacity = this._.accessors.opacity(datum, 'left-handler');
 		leftHandler.style.display = (this._.accessors.visible(datum, 'left-handler'))? 'block' : 'none';
 
@@ -124,6 +125,7 @@ class SegmentsLayer extends Layer {
 		rightHandler.style.width = this._.accessors.width(datum, 'right-handler') + "px";
 		rightHandler.style.backgroundColor = this._.accessors.color(datum, 'right-handler');
 		rightHandler.style.position = "absolute";
+		rightHandler.style.zIndex = this._.accessors.zIndex(datum, 'right-handler');
 		rightHandler.style.opacity = this._.accessors.opacity(datum, 'right-handler');
 		rightHandler.style.display = (this._.accessors.visible(datum, 'right-handler'))? 'block' : 'none';
 
@@ -140,6 +142,7 @@ class SegmentsLayer extends Layer {
 		topHandler.style.width = "100%";
 		topHandler.style.backgroundColor = this._.accessors.color(datum, 'top-handler');
 		topHandler.style.position = "absolute";
+		topHandler.style.zIndex = this._.accessors.zIndex(datum, 'top-handler');
 		topHandler.style.opacity = this._.accessors.opacity(datum, 'top-handler');
 		topHandler.style.display = (this._.accessors.visible(datum, 'top-handler'))? 'block' : 'none';
 
@@ -156,6 +159,7 @@ class SegmentsLayer extends Layer {
 		bottomHandler.style.width = "100%";
 		bottomHandler.style.backgroundColor = this._.accessors.color(datum, 'bottom-handler');
 		bottomHandler.style.position = "absolute";
+		bottomHandler.style.zIndex = this._.accessors.zIndex(datum, 'bottom-handler');
 		bottomHandler.style.opacity = this._.accessors.opacity(datum, 'bottom-handler');
 		bottomHandler.style.display = (this._.accessors.visible(datum, 'bottom-handler'))? 'block' : 'none';
 
@@ -168,6 +172,7 @@ class SegmentsLayer extends Layer {
 		background.style.height = '100%';
 		background.style.position = 'absolute';
 		background.style.backgroundColor = this._.accessors.color(datum, 'background');
+		background.style.zIndex = this._.accessors.zIndex(datum, 'background');
 		background.style.opacity = this._.accessors.opacity(datum, 'background');
 		background.style.display = (this._.accessors.visible(datum, 'background'))? 'block' : 'none';
 

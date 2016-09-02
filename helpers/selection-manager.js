@@ -29,7 +29,7 @@ class SelectionManager extends EventEmitter {
 		var selectedDataOnLayer = this.selectedData.get(layer);
 		if (selectedDataOnLayer) {
 			var hash = layer.get_hash(datum);
-			if (!selectedDataOnLayer.has(hash)) 
+			if (selectedDataOnLayer.has(hash)) 
 				return true;
 		}
 		return false;

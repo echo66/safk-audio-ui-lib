@@ -375,12 +375,12 @@ class Layer {
 
 		if (sameInterval) {
 			if (this.refreshOnScroll) {
-				console.log('updating');
+				// console.log('updating');
 				this.update();
 			}
 		} else {
 			if (this.autoRefresh) {
-				console.log('updating');
+				// console.log('updating');
 				this.update();
 			}
 		}

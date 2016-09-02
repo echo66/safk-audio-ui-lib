@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../utils/event-emitter.js"></script>
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<script type="text/javascript" src="../layers/list.js"></script>
+		<script type="text/javascript" src="../layers/layer.js"></script>
+		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
+		<script type="text/javascript" src="../layers/waveforms-segments-layer.js"></script>
+		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-segment-edit-controller.js"></script>
+		<script type="text/javascript" src="../helpers/time-scroller.js"></script>
+
+		<script src='https://mohayonao.github.io/timbre.js/timbre.dev.js'></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/jquery.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/codemirror.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/javascript.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/xml.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/htmlmixed.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/subcollider.js"></script>
+		<script src="https://mohayonao.github.io/timbre.js/misc/js/common.js"></script>
+		<script src="timbre-demo.js"></script>
+	</head>
+
+	<body>
+		<scroller id="scroller"></scroller>
+		<ttrack id="track1" style="position: relative; height: 100px; width: 800px;">
+		</ttrack>
+
+		<script type="text/javascript">
+			function load_sample(audioCtx, url, callback) {
+				var request = new XMLHttpRequest();
+				request.open('GET', url, true);
+				request.responseType = 'arraybuffer';
+					request.onload = function() {
+					audioCtx.decodeAudioData(request.response, function(decodedData) {
+						callback(decodedData);
+					});
+				};
+				request.send();
+			}
+
+			var data = [];
+
+			for (var i=0; i<10; i++) {
+				data.push({
+					id: i, 
+					time: i*10, 
+					duration: 10, 
+					lowValue: 0, 
+					highValue: 1, 
+					bufferStart: (i) * 44000, 
+					bufferEnd: (i+1) * 44000
+				});
+			}
+
+			var dataIt = {
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			dataIt.start = function(params) {
+				this.index = 0;
+			}.bind(dataIt);
+			dataIt.next = function() {
+				if (this.index >= data.length) {
+					this.entry.value = undefined; 
+					this.entry.done = true;
+				} else {
+					this.entry.value = data[this.index++];
+					this.entry.done = false;
+				}
+				return this.entry;
+			}.bind(dataIt);
+			dataIt.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(dataIt);
+			
+			var editController;
+
+			var l1 = new WaveformSegmentsLayer({
+				height: 100, width: 800
+			});
+
+			track1.appendChild(l1.layerDomEl);
+
+			l1.get_datum = (hash) => {
+				return data[hash];
+			};
+
+			l1.get_hash = (datum) => {
+				return datum.id + "";
+			};
+
+			l1.accessor('bufferEnd', (d) => {
+				return Math.round(d.bufferStart + d.duration * d.audioBuffer.sampleRate);
+			});
+
+			l1.accessor('sampleRate', (d) => {
+				return d.audioBuffer.sampleRate;
+			});
+
+			l1.accessor('channelData', (d, channelNumber) => {
+				return d.audioBuffer.getChannelData(channelNumber);
+			});
+
+			l1.accessor('color', (d, elementName) => {
+				switch (elementName) {
+					case 'header': 
+						return 'cyan';
+					case 'right-handler': 
+					case 'left-handler': 
+					case 'bottom-handler': 
+					case 'top-handler':  
+						return 'blue';
+					case 'waveform': 
+						return 'black';
+					case 'segment': 
+						return 'rgb(255,255,255)';
+				}
+			});
+
+			l1.accessor('waveformMaxDetail', (d, elementName) => {
+				return 1000;
+			});
+
+			l1.accessor('width', (d, elementName) => {
+				switch (elementName) {
+					case 'right-handler': 
+					case 'left-handler': 
+					case 'bottom-handler': 
+					case 'top-handler': 
+						return 3;
+					case 'waveform': 
+						return 1;
+				}
+			});
+
+			l1.accessor('text', (d) => {
+				return "w" + d.id;
+			});
+
+			l1.accessor('zIndex', (d, elementName) => {
+				switch (elementName) {
+					case 'right-handler':
+					case 'left-handler':
+					case 'bottom-handler':
+					case 'top-handler':
+						return 4;
+					case 'header':
+						return 3;
+					case 'waveform-overlay':
+						return 2;
+					case 'waveform':
+						return 1;
+					case 'background':
+						return 0;
+					case 'segment': 
+						return d.id;
+				}
+			});
+
+			l1.accessor('opacity', (d, elementName) => {
+				if (elementName === 'header') 
+					return 0.5;
+				else 
+					return 1;
+			});
+
+			l1.accessor('visible', (d, elementName) => {
+				if (elementName === 'waveform') {
+					if (editController.is_editing(l1, d)) {
+						return false;
+					}
+					
+				}
+				return true;
+			});
+
+			var audioCtx = new AudioContext();
+			load_sample(audioCtx, 'http://localhost/OLA-TS.js/07.%20Around%20The%20World.mp3', 
+				(decodedData) => {
+					var audioBuffer = decodedData;
+
+					data.forEach((d) => d.audioBuffer = audioBuffer);
+
+					data.forEach((datum) => l1.set(datum));
+				});
+
+			editController = new SimpleSegmentEditController({ 
+				layer: l1, 
+				allowXEdit: true, 
+				allowYEdit: false 
+			});
+
+			editController.on('end-edit', (layer, datum) => {
+				layer.set(datum);
+			});
+
+			var scroller = new TimeScroller({
+				height: 10, width: 800
+			});
+			scroller.availableTimeRange = [0, 1000];
+			scroller.add_target_layer(l1);
+			document.getElementById('scroller').appendChild(scroller.layerDomEl);
+			
+		</script>
+		
+	</body>
+</html>

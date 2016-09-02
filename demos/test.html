@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../linear-scale.js"></script>
+		<style type="text/css">
+			.layer {
+				width: 1000px;	
+				height: 100px;
+				position: absolute;
+				top: 0px;
+			}
+
+			.track {
+				position: relative;
+				height: 100px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script type="text/javascript">
+			
+			var $track = document.createElement('div');
+			$track.classList.add('track');
+			$track.setAttribute('id', 't1');
+			
+			var $layer1 = document.createElement('div');
+			$layer1.appendChild(document.createElement('div'));
+			$layer1.classList.add('layer');
+			$layer1.setAttribute('id', 'l1');
+			
+			var $layer2 = document.createElement('div');
+			$layer2.appendChild(document.createElement('div'));
+			$layer2.classList.add('layer');
+			$layer2.setAttribute('id', 'l2');
+
+			var $segment1 = document.createElement('div');
+			$segment1.classList.add('segment');
+			$segment1.style.display = 'block';
+			$segment1.style.backgroundColor = 'yellow';
+			$segment1.style.position = 'relative';
+			$segment1.style.width = '25px';
+			$segment1.style.height = '100px';
+			$segment1.style.left = '0px';
+
+			var $segment2 = document.createElement('div');
+			$segment2.classList.add('segment');
+			$segment2.style.display = 'block';
+			$segment2.style.backgroundColor = 'green';
+			$segment2.style.position = 'relative';
+			$segment2.style.width = '50px';
+			$segment2.style.height = '100px';
+			$segment2.style.left = '20px';
+
+			$layer1.children[0].appendChild($segment1);
+			$layer2.children[0].appendChild($segment2);
+
+			$track.appendChild($layer1);
+			$track.appendChild($layer2);
+			document.body.appendChild($track);
+
+			var back = document.createElement('button');
+			var forw = document.createElement('button');
+
+			back.innerHTML = "-0.1";
+			forw.innerHTML = "+0.1";
+
+			document.body.appendChild(back);
+			document.body.appendChild(forw);
+
+		</script>
+	</body>
+</html>

@@ -15,6 +15,11 @@ class SimpleEditController extends EventEmitter {
 				if (!isNaN(v)) 
 					d.time = v;
 				return d.time;
+			}, 
+			zIndex: (d, v) => { // TODO: where will I use this?
+				if (!isNaN(v)) 
+					d.zIndex = v;
+				return d.zIndex;
 			}
 		}
 
@@ -55,8 +60,12 @@ class SimpleEditController extends EventEmitter {
 
 			let lastEventType = this._.lastEventType;
 
-			if (lastEventType === 'mousedown') 
-				this.emit('start-edit');
+			if (lastEventType === 'mousedown') {
+				this.emit('start-edit-layer', that._.layer);
+				this._.selectionManager.apply_on_selected(this._.layer, (datum) => {
+					this.emit('start-edit-datum', that._.layer, datum);
+				});
+			}
 
 			this._.lastEventType = e.type;
 
@@ -67,6 +76,7 @@ class SimpleEditController extends EventEmitter {
 				let dy = e.clientY - this._.lastCoords.y;
 				this._edit_datum(datum, that._.startingEl, e, dx, dy);
 				this._.beingSelected.push(datum);
+				this.emit('edit', that._.layer, datum);
 			}, () => {
 				this._.layer.update(this._.updateIterator);
 			});
@@ -74,7 +84,7 @@ class SimpleEditController extends EventEmitter {
 			this._.lastCoords.x = e.clientX;
 			this._.lastCoords.y = e.clientY;
 
-			this.emit('edit');
+			this.emit('edit-layer', that._.layer);
 		};
 
 		this._on_dragend = (e) => {
@@ -89,8 +99,13 @@ class SimpleEditController extends EventEmitter {
 
 			this._.layer.layerDomEl.addEventListener('mousedown', this._on_mousedown);
 
-			if (lastEventType === 'mousemove')
-				this.emit('end-edit');
+			if (lastEventType === 'mousemove') {
+				const that = this;
+				this._.selectionManager.apply_on_selected(this._.layer, (datum) => {
+					this.emit('end-edit', that._.layer, datum);
+				});
+				this.emit('end-edit-layer', that._.layer);
+			}
 		}
 
 		this._selection_check = (e) => {
@@ -136,5 +151,16 @@ class SimpleEditController extends EventEmitter {
 	_edit_datum(datum, startingEl, e, dx, dy) {
 		let newStartTime = this.__edit(datum, 'time', dx, this._.layer._.timeToPixel);
 		(!isNaN(newStartTime)) && this._.accessors.time(datum, newStartTime);
+	}
+
+	is_editing(layer, datum) {
+		if (this._.lastEventType === 'mousemove') {
+			return this.selectionManager.is_selected(layer, datum);
+		}
+		return false;
+	}
+
+	get selectionManager() {
+		return this._.selectionManager;
 	}
 }
