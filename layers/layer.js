@@ -158,6 +158,13 @@ class Layer {
 		delete this.valueDomain;
 	}
 
+	removeUnused() {
+		while (this._.unusedElsList.size) {
+			var unused = this._.unusedElsList.pop();
+			unused.remove();
+		}
+	}
+
 	update(iterator, canOverwrite) {
 		const that = this;
 

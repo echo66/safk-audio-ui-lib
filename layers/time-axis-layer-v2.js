@@ -24,14 +24,19 @@ class TimeAxisLayer extends Layer {
 		});
 		this.accessor('color', (d, elementName) => {
 			/* 'tick' 'text' */
-			return d.color || 'green';
+			if (elementName === 'tick') {
+				return d.tickColor;
+			} else if (elementName === 'text') {
+				return d.fontColor;
+			}
 		});
 		this.accessor('width', (d) => {
 			/* */
-			return d.width || 1;
+			return d.tickWidth;
 		});
 		this.accessor('height', (d) => {
-			return d.height || that.height;
+			/* */
+			return d.tickHeight || that.height;
 		});
 		this.accessor('text', (d) => {
 			/* */
@@ -39,7 +44,11 @@ class TimeAxisLayer extends Layer {
 		});
 		this.accessor('textOffset', (d, axis) => {
 			/* 'x' 'y' */
-			return d.textOffset || 0;
+			if (axis === 'x') {
+				return d.textOffsetX || 0;
+			} else if (axis === 'y') {
+				return d.textOffsetY || 0;
+			}
 		});
 		this.accessor('fontSize', (d) => {
 			/* */
@@ -51,16 +60,39 @@ class TimeAxisLayer extends Layer {
 		});
 		this.accessor('opacity', (d, elementName) => {
 			/* 'tick' 'text' 'tick-container' */
-			return d.opacity || 1;
+			if (elementName === 'tick') {
+				return d.tickColor;
+			} else if (elementName === 'text') {
+				return d.fontColor;
+			} else if (elementName === 'tick-container') {
+				return (d.opacity != undefined)? d.opacity : 1;
+			}
 		});
 		this.accessor('zIndex', (d, elementName) => {
 			/* 'tick' 'text' */
 			switch (elementName) {
 				case 'tick': return 1;
 				case 'text': return 2;
+				default: return 1;
 			}
 		});
+		this.accessor('visible', (d, elementName) => {
+			/* 'tick-container' 'tick' 'text' 'axis' */
+			return true;
+		});
 
+		this.refreshOnScroll = true;
+	}
+
+	removeUnused() {
+		super.removeUnused();
+		var $axes = this._.$container.children;
+		for (var i=0; i<$axes.length; i++) {
+			var $axis = $axes[i];
+			while ($axis.safk.unusedDomEls.size) {
+				$axis.safk.unusedDomEls.pop().remove();
+			}
+		}
 	}
 
 	_allocate_tick_container($axis) {
@@ -68,6 +100,7 @@ class TimeAxisLayer extends Layer {
 
 		if (!$tickContainer) {
 			$tickContainer = document.createElement('tick-container');
+			$tickContainer.setAttribute('unused', false);
 			var $tick = document.createElement('tick');
 			var $text = document.createElement('span');
 			$tickContainer.appendChild($tick);
@@ -93,6 +126,7 @@ class TimeAxisLayer extends Layer {
 		$tickContainer.style.top = "0px";
 		$tickContainer.style.display = "block";
 		$tickContainer.style.opacity = this._.accessors.opacity(datum, 'tick-container');
+		$tickContainer.style.display = (this._.accessors.visible(datum, 'tick-container'))? 'block' : 'none';
 
 		return $tickContainer;
 	}
@@ -106,7 +140,8 @@ class TimeAxisLayer extends Layer {
 		$tick.style.zIndex = 1;
 		$tick.style.backgroundColor = this._.accessors.color(datum, 'tick');
 		$tick.style.opacity = this._.accessors.opacity(datum, 'tick');
-		$tick.style.zIndex= this._.accessors.zIndex(datum, 'tick');
+		$tick.style.zIndex = this._.accessors.zIndex(datum, 'tick');
+		$tick.style.display = (this._.accessors.visible(datum, 'tick'))? 'block' : 'none';
 		
 		return $tick;
 	}
@@ -115,10 +150,12 @@ class TimeAxisLayer extends Layer {
 		$text.style.position = "absolute";
 		$text.style.top = this._.accessors.textOffset(datum, 'y') + "px";
 		$text.style.left = this._.accessors.textOffset(datum, 'x') + "px";
+		$text.style.color = this._.accessors.color(datum, 'text');
 		$text.style.fontSize = this._.accessors.fontSize(datum) + "px";
 		$text.style.fontFamily = this._.accessors.fontFamily(datum);
 		$text.style.opacity = this._.accessors.opacity(datum, 'text');
-		$text.style.zIndex= this._.accessors.zIndex(datum, 'text');
+		$text.style.zIndex = this._.accessors.zIndex(datum, 'text');
+		$text.style.display = (this._.accessors.visible(datum, 'text'))? 'block' : 'none';
 		$text.innerText = this._.accessors.text(datum);
 
 		return $text;
@@ -148,8 +185,12 @@ class TimeAxisLayer extends Layer {
 		}
 
 		while ($axis.safk.auxList.size > 0) {
-			$axis.safk.activeDomEls.push($axis.safk.auxList.pop());
+			var $tickContainer = $axis.safk.auxList.pop();
+			$tickContainer.setAttribute('unused', false);
+			$axis.safk.activeDomEls.push($tickContainer);
 		}
+
+		$axis.style.display = (this._.accessors.visible(datum, 'axis'))? 'block' : 'none';
 
 		return $axis;
 	}

@@ -2,15 +2,24 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script type="text/javascript" src="../utils/event-emitter.js"></script>
 		<script type="text/javascript" src="../linear-scale.js"></script>
 		<script type="text/javascript" src="../layers/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/time-axis-layer-v2.js"></script>
+		<script type="text/javascript" src="../helpers/abstract-time-axis-generator.js"></script>
+		<script type="text/javascript" src="../helpers/simple-time-axis-generator.js"></script>
+		<script type="text/javascript" src="../helpers/bar-time-axis-generator.js"></script>
+		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
+		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
+		<script type="text/javascript" src="../interaction-controllers/simple-segment-edit-controller.js"></script>
+		<script type="text/javascript" src="../helpers/time-scroller.js"></script>
 	</head>
 
 	<body>
-		<ttrack id="track1" style="position: relative; height: 100px; width: 500px;">
-		</ttrack>
+		<ttrack id="track1" style="position: relative; height: 100px; width: 500px;"></ttrack>
+		<div id="scroller"></div>
 
 		<script type="text/javascript">
 
@@ -18,59 +27,9 @@
 				height: 50, width: 500
 			});
 
-			var axis1 = {
-				currentTime: undefined, 
-				timeDomain: undefined, 
-				entry: { 
-					value: undefined, 
-					done: undefined 
-				}, 
-				nextValue: { 
-					time: undefined, 
-					color: undefined, 
-					width: undefined, 
-					height: undefined, 
-					text: undefined, 
-					textOffset: undefined, 
-				}
-			};
-			axis1.start = function(timeAxisLayer) {
-				this.timeDomain = timeAxisLayer.timeDomain;
-				this.currentTime = this.timeDomain[0];
-				this.timeStep;
-			}.bind(axis1);
-			axis1.next = function() {
-				if (this.currentTime > this.timeDomain[1]) {
-					this.entry.value = undefined;
-					this.entry.done = true;
-				} else {
-					this.nextValue.time = this.currentTime; 
-					this.nextValue.color = 'black'; 
-					this.nextValue.width = 2; 
-					this.nextValue.height = undefined; 
-					this.nextValue.text = this.currentTime + ""; 
-					this.nextValue.textOffset = 2;
+			// var axis1 = new BarTimeAxisGenerator({ beatsPerBar: 4 });
 
-					this.entry.value = this.nextValue;
-					this.entry.done = false;
-
-					this.currentTime += this.timeStep;
-				}
-				return this.entry;
-			}.bind(axis1);
-			axis1.stop = function() {
-				this.timeDomain = undefined;
-				this.currentTime = undefined;
-				this.timeStep = undefined;
-				this.entry.value = undefined;
-				this.entry.done = undefined;
-				this.nextValue.time = undefined; 
-				this.nextValue.color = undefined; 
-				this.nextValue.width = undefined; 
-				this.nextValue.height = undefined; 
-				this.nextValue.text = undefined;
-				this.nextValue.textOffset = undefined; 
-			}.bind(axis1);
+			var axis1 = new BarTimeAxisGenerator({ beatsPerBar: 3 });
 
 			var axes = {
 				axes: [axis1], 
@@ -109,6 +68,13 @@
 			track1.appendChild(l1.layerDomEl);
 
 			l1.update();
+
+			var scroller = new TimeScroller({
+				height: 10, width: 1000
+			});
+			scroller.availableTimeRange = [0, 1000];
+			scroller.add_target_layer(l1);
+			document.getElementById('scroller').appendChild(scroller.layerDomEl);
 
 
 		</script>
