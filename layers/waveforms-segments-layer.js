@@ -7,6 +7,9 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 	constructor(params) {
 		super(params);
 
+		this.accessor('bufferTimeToPixel', (datum, samples, sampleRate, bufferStart, bufferCursor, bufferEnd) => {
+			return (bufferCursor - bufferStart) / sampleRate;
+		});
 		this.accessor('channelData', (d, channelNumber) => {
 			return undefined;
 		});
@@ -50,11 +53,12 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 						((d.zIndex !== undefined)? d.zIndex : 1);
 		});
 
-		this._.waveformValueToPixel = linear().domain([-1, 1]).range([0, this.height]);
+		this._.waveformSegmentValueToPixel = linear().domain([-1, 1]).range([0, this.height]);
+		this._.waveformSegmentTimeToPixel = linear().domain([0, 1]).range([0, 1]);;
 
 		this._.onchange = (property, newValue) => {
 			if (property === 'height') {
-				let range = this._.waveformValueToPixel.range();
+				let range = this._.waveformSegmentValueToPixel.range();
 				range[1] = newValue;
 			}
 		};
@@ -90,7 +94,12 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 		});
 	}
 
-	_render_waveform(bufferStart, bufferEnd, sampleRate, channelData0, channelData1, waveformLineColor, waveformLineWidth, waveformDetail, height, $canvas) {
+	_render_waveform(datum, bufferStart, bufferEnd, sampleRate, channelData0, channelData1, waveformLineColor, waveformLineWidth, waveformDetail, height, $canvas) {
+		const waveformSegmentTimeToPixel = this._.waveformSegmentTimeToPixel;
+		const waveformSegmentValueToPixel = this._.waveformSegmentValueToPixel;
+		const segmentDuration = this._.accessors.duration(datum);
+		const layer = this;
+
 		return new Promise((resolve, reject) => {
 			var ctx = $canvas.getContext("2d");
 			ctx.clearRect(0, 0, $canvas.width, $canvas.height);
@@ -108,13 +117,19 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 			ctx.moveTo(0, 0);
 			ctx.beginPath();
 
-			var px = 0;
+			var domain = waveformSegmentTimeToPixel.domain();
+			domain[1] = segmentDuration;
+			waveformSegmentTimeToPixel.domain(domain);
+			var range  = waveformSegmentTimeToPixel.range();
+			range[1] = numPixels;
+			waveformSegmentTimeToPixel.range(range);
 
-			for (var i = bufferStart; i <= bufferEnd; i++) {
-				var valAm = il[i]
-				var valPx = l1._.waveformValueToPixel(valAm);
-				ctx.lineTo(px, valPx);
-				px += pixelStep;
+			for (var bufferCursor = bufferStart; bufferCursor <= bufferEnd; bufferCursor++) {
+				var value = il[bufferCursor];
+				var segmentTime = layer._.accessors.bufferTimeToPixel(datum, il, sampleRate, bufferStart, bufferCursor, bufferEnd);
+				var valuePx = waveformSegmentValueToPixel(value);
+				var segmentTimePx = waveformSegmentTimeToPixel(segmentTime);
+				ctx.lineTo(segmentTimePx, valuePx);
 			}
 
 			ctx.lineWidth = waveformLineColor;
@@ -290,6 +305,7 @@ class WaveformsRenderingController {
 					var datum = layer.get_datum(hash);
 
 					layer._render_waveform(
+											datum, 
 											layer._.accessors.bufferStart(datum), layer._.accessors.bufferEnd(datum), 
 											layer._.accessors.sampleRate(datum), 
 											layer._.accessors.channelData(datum, 0), undefined, 
