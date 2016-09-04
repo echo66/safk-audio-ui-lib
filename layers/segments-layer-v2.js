@@ -16,6 +16,7 @@ class SegmentsLayer extends Layer {
 			layerElementDatumHashAttribute: params.layerElementTagName || 'data-hash'
 		});
 
+		const that = this;
 		// DEFINE ACCESSORS
 		{
 			this.accessor('time', (d) => { 
@@ -64,7 +65,19 @@ class SegmentsLayer extends Layer {
 				 * 'right-handler' 'left-handler' 'bottom-handler' 
 				 * 'top-handler' 'segment' 'background' 'content'
 				 */
-				return (d.visible !== undefined)? d.visible : true; 
+				// return (d.visible !== undefined)? d.visible : true; 
+				var t0 = that.timeDomain[0];
+				var t1 = that.timeDomain[1];
+				var deltaT = that._.accessors.time(d) - t0;
+				var absDeltaT = Math.abs(deltaT);
+				if (deltaT === 0) 
+					return true;
+				if (deltaT < 0 && absDeltaT < that._.accessors.duration(d)) 
+					return true;
+				else if (deltaT > 0 && absDeltaT < (t1 - t0))
+					return true;
+				else 
+					return false;
 			});
 			this.accessor('lowValue', (d) => { 
 				/*
@@ -184,15 +197,15 @@ class SegmentsLayer extends Layer {
 
 		this._configure_segment($segment, datum);
 
-		this._configure_left_handler($segment.safk.leftHandler, datum);
+		this._configure_left_handler($segment[this._.safkCustomProperty].leftHandler, datum);
 
-		this._configure_right_handler($segment.safk.rightHandler, datum);
+		this._configure_right_handler($segment[this._.safkCustomProperty].rightHandler, datum);
 
-		this._configure_top_handler($segment.safk.topHandler, datum);
+		this._configure_top_handler($segment[this._.safkCustomProperty].topHandler, datum);
 
-		this._configure_bottom_handler($segment.safk.bottomHandler, datum);
+		this._configure_bottom_handler($segment[this._.safkCustomProperty].bottomHandler, datum);
 
-		this._configure_background($segment.safk.background, datum);
+		this._configure_background($segment[this._.safkCustomProperty].background, datum);
 
 		return $segment;
 	}
@@ -200,17 +213,17 @@ class SegmentsLayer extends Layer {
 	allocate_element(datum) {
 		let $segment = super.allocate_element(datum);
 
-		$segment.safk = $segment.safk || {};
+		$segment[this._.safkCustomProperty] = $segment[this._.safkCustomProperty] || {};
 
-		if (!$segment.safk.background) $segment.appendChild($segment.safk.background = document.createElement('background'));
+		if (!$segment[this._.safkCustomProperty].background) $segment.appendChild($segment[this._.safkCustomProperty].background = document.createElement('background'));
 
-		if (!$segment.safk.leftHandler) $segment.appendChild($segment.safk.leftHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].leftHandler) $segment.appendChild($segment[this._.safkCustomProperty].leftHandler = document.createElement('handler'));
 
-		if (!$segment.safk.rightHandler) $segment.appendChild($segment.safk.rightHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].rightHandler) $segment.appendChild($segment[this._.safkCustomProperty].rightHandler = document.createElement('handler'));
 
-		if (!$segment.safk.topHandler) $segment.appendChild($segment.safk.topHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].topHandler) $segment.appendChild($segment[this._.safkCustomProperty].topHandler = document.createElement('handler'));
 
-		if (!$segment.safk.bottomHandler) $segment.appendChild($segment.safk.bottomHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].bottomHandler) $segment.appendChild($segment[this._.safkCustomProperty].bottomHandler = document.createElement('handler'));
 
 
 		return $segment;

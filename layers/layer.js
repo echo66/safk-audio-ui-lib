@@ -2,7 +2,7 @@
 
 // import { List } from './list.js';
 
-class Layer {
+class Layer extends EventEmitter {
 
 	/* 
 	 {
@@ -17,6 +17,7 @@ class Layer {
 	 }
 	 */
 	constructor(params) {
+		super();
 		const that = this;
 		this._ = {};
 		params = params || {};
@@ -24,6 +25,7 @@ class Layer {
 		this._.layerTagName = params.layerTagName;
 		this._.layerElementTagName = params.layerElementTagName;
 		this._.layerElementDatumHashAttribute = params.layerElementDatumHashAttribute;
+		this._.safkCustomProperty = params.safkCustomProperty || 'safk';
 
 		this._.timeToPixel = linear();
 		this._.valueToPixel = linear();
@@ -119,37 +121,53 @@ class Layer {
 		this._.defaultIterator = params.defaultIterator ||
 									{
 										entry: { value: undefined, done: false }, 
+										activeElsListIt: undefined, 
 										start: function(layer) {
 											this.entry.value = undefined;
 											this.entry.done = false;
-											this.nextActiveEl = that._.activeElsList.firstEl;
-											this.listNexProp = that._.activeElsList.propertyName;
+											this.activeElsList = that._.activeElsList.iterator();
 										}, 
 										next: function() {
-											if (this.nextActiveEl) {
-												var hash = this.nextActiveEl.getAttribute(that._.layerElementDatumHashAttribute);
+											var entry = this.activeElsList.next();
+
+											if (!entry.done) {
+												var $el = entry.value;
+												var hash = $el[that._.safkCustomProperty].datumHash;
 												var datum = that.get_datum(hash);
-												this.nextActiveEl = this.nextActiveEl[this.listNexProp];
 												this.entry.value = datum;
 												this.entry.done = false;
 											} else {
 												this.entry.value = undefined;
 												this.entry.done = true;
 											}
-											
+
 											return this.entry;
 										}, 
 										stop: function() {
 											this.entry.value = undefined;
 											this.entry.done = false;
+											this.activeElsList = undefined;
 										}
 									};
 	}
 
 	destroy() {
-		this._.activeElsList.clear();
-		this._.unusedElsList.clear();
-		this._.auxElsList.clear();
+		while (this._.activeElsList.size) {
+			var $el = this._.activeElsList.pop();
+			this.unassociate_element_to($el, $el.getAttribute(this._.layerElementDatumHashAttribute));
+			delete $el[this._.safkCustomProperty];
+		}
+		while (this._.unusedElsList.size) {
+			var $el = this._.unusedElsList.pop();
+			delete $el[this._.safkCustomProperty];
+		}
+		while (this._.auxElsList.size) {
+			var $el = this._.auxElsList.pop();
+			delete $el[this._.safkCustomProperty];
+		}
+		// this._.activeElsList.clear();
+		// this._.unusedElsList.clear();
+		// this._.auxElsList.clear();
 
 		this._.$el.remove();
 
@@ -161,6 +179,7 @@ class Layer {
 	removeUnused() {
 		while (this._.unusedElsList.size) {
 			var unused = this._.unusedElsList.pop();
+			unused[this._.safkCustomProperty].destroy && unused[this._.safkCustomProperty].destroy();
 			unused.remove();
 		}
 	}
@@ -210,7 +229,7 @@ class Layer {
 		return $el;
 	}
 
-	remove(datum) {
+	unset(datum) {
 		let hash = this.get_hash(datum);
 		let $el = this.get_element(hash);
 		if ($el) {
@@ -257,7 +276,15 @@ class Layer {
 				this._.activeElsList.push($el);
 		}
 
-		this.associate_element_to($el, this.get_hash(datum));
+		var hash = this.get_hash(datum);
+
+		this.associate_element_to($el, hash);
+
+		$el[this._.safkCustomProperty] = $el[this._.safkCustomProperty] || {};
+
+		$el[this._.safkCustomProperty].layer = this;
+
+		$el[this._.safkCustomProperty].datumHash = hash;
 
 		return $el;
 	}
@@ -283,6 +310,7 @@ class Layer {
 	 */
 	unassociate_element_to($el, hash) {
 		$el.removeAttribute(this._.layerElementDatumHashAttribute);
+		delete $el[this._.safkCustomProperty].datumHash;
 		// delete $el.datum;
 	}
 
@@ -335,6 +363,8 @@ class Layer {
 		if (this.autoRefresh)
 			this.update();
 
+		this.emit('change', 'width', layerWidth);
+
 		this._.onchange && this._.onchange('width', layerWidth);
 	}
 
@@ -357,6 +387,8 @@ class Layer {
 
 		if (this.autoRefresh)
 			this.update();
+
+		this.emit('change', 'height', layerHeight);
 
 		this._.onchange && this._.onchange('height', layerHeight);
 	}

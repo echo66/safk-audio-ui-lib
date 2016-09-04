@@ -3,8 +3,8 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<script type="text/javascript" src="../utils/event-emitter.js"></script>
-		<script type="text/javascript" src="../linear-scale.js"></script>
-		<script type="text/javascript" src="../layers/list.js"></script>
+		<script type="text/javascript" src="../utils/linear-scale.js"></script>
+		<script type="text/javascript" src="../utils/list.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
 		<script type="text/javascript" src="../layers/waveforms-segments-layer.js"></script>
@@ -136,7 +136,7 @@
 					case 'left-handler': 
 					case 'bottom-handler': 
 					case 'top-handler': 
-						return 3;
+						return 1;
 					case 'waveform': 
 						return 1;
 				}
@@ -173,9 +173,14 @@
 					return 1;
 			});
 
-			l1.accessor('allowWaveformReDraw', (d) => {
+			l1.accessor('allowWaveformRedraw', (d) => {
+				// return true;
 				return !editController.is_editing(l1, d);
 			});
+
+			// l1.accessor('isHighPriorityRedraw', (d) => {
+			// 	return editController.is_editing(l1, d);
+			// });
 
 			var audioCtx = new AudioContext();
 			load_sample(audioCtx, 'http://localhost/OLA-TS.js/07.%20Around%20The%20World.mp3', 
