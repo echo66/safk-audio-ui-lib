@@ -18,6 +18,10 @@ class TimeScroller extends EventEmitter {
 			}
 		});
 		this._.scrollerLayer.timeDomain = params.availableTimeRange || this._.scrollerLayer.timeDomain;
+		this._.scrollerSegmentPreviousVersion = {
+			time: 0, 
+			duration: 20
+		};
 		this._.scrollerSegment = {
 			time: 0, 
 			duration: 20
@@ -31,9 +35,7 @@ class TimeScroller extends EventEmitter {
 				return that._.scrollerSegment;
 		};
 
-		this._.scrollerLayer.get_hash = (datum) => {
-			return "scroll-segment";
-		};
+		this._.scrollerLayer.get_hash = (datum) => "scroll-segment";
 		this._.targetLayers = new Set();
 		this._.scrollerLayer.set(this._.scrollerSegment);
 		

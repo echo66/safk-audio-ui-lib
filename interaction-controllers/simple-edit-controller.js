@@ -44,6 +44,7 @@ class SimpleEditController extends EventEmitter {
 		};
 
 		this._on_mousedown = (e) => {
+			e.preventDefault();
 			this._.lastEventType = e.type;
 			this._.lastCoords.x = e.clientX;
 			this._.lastCoords.y = e.clientY;
@@ -56,6 +57,7 @@ class SimpleEditController extends EventEmitter {
 		};
 
 		this._on_drag = (e) => {
+			e.preventDefault();
 			const that = this;
 
 			let lastEventType = this._.lastEventType;
@@ -88,6 +90,7 @@ class SimpleEditController extends EventEmitter {
 		};
 
 		this._on_dragend = (e) => {
+			e.preventDefault();
 			let lastEventType = this._.lastEventType;
 
 			this._.startingEl = undefined;

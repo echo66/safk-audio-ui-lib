@@ -49,21 +49,21 @@ class SegmentsLayer extends Layer {
 			this.accessor('zIndex', (d, elementName) => { 
 				/*
 				 * 'right-handler' 'left-handler' 'bottom-handler' 
-				 * 'top-handler' 'segment' 'background' 'content'
+				 * 'top-handler' 'segment' 'background'
 				 */
 				return (d.zIndex !== undefined)? d.zIndex : 1;
 			});
 			this.accessor('opacity', (d, elementName) => { 
 				/*
 				 * 'right-handler' 'left-handler' 'bottom-handler' 
-				 * 'top-handler' 'segment' 'background' 'content'
+				 * 'top-handler' 'segment' 'background'
 				 */
 				return (d.opacity !== undefined)? d.opacity : 1;
 			});
 			this.accessor('visible', (d, elementName) => { 
 				/*
 				 * 'right-handler' 'left-handler' 'bottom-handler' 
-				 * 'top-handler' 'segment' 'background' 'content'
+				 * 'top-handler' 'segment' 'background'
 				 */
 				// return (d.visible !== undefined)? d.visible : true; 
 				var t0 = that.timeDomain[0];

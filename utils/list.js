@@ -17,6 +17,32 @@ class List {
 		}
 	}
 
+	get first() {
+		return this.firstEl;
+	}
+
+	get last() {
+		return this.lastEl;
+	}
+
+	remove(el) {
+		if (el && this.has(el)) {
+			if (el === this.firstEl) {
+				this.remove_first();
+			} else if (el === this.lastEl) {
+				this.remove_last();
+			} else {
+				var prev 		= el[this.prevPropertyName];
+				var next 		= el[this.nextPropertyName];
+				prev[this.nextPropertyName] = next;
+				next[this.prevPropertyName] = prev;
+				delete el[this.nextPropertyName];
+				delete el[this.prevPropertyName];
+			}
+			this.size--;
+		}
+	}
+
 	remove_first() {
 		if (this.size) {
 			let el = this.firstEl;
@@ -51,12 +77,19 @@ class List {
 		return this.remove_first();
 	}
 
-	push(el) {
-		this.insert_as_last(el);
+	push(el, canChangePlace = false) {
+		this.insert_as_last(el, canChangePlace);
 	}
 
-	insert_as_first(el) {
-		if (!this.has(el)) {
+	insert_as_first(el, canChangePlace = false) {
+		if (el) {
+			if (this.has(el)) {
+				if (canChangePlace) 
+					this.remove(el);
+				else 
+					return;
+			} 
+
 			if (!this.firstEl) {
 				this.firstEl = this.lastEl = el;
 				el[this.prevPropertyName] = undefined;
@@ -67,12 +100,20 @@ class List {
 				el[this.nextPropertyName] = this.firstEl;
 				this.firstEl = el;
 			}
+
 			this.size++;
 		}
 	}
 
-	insert_as_last(el) {
-		if (!this.has(el)){
+	insert_as_last(el, canChangePlace = false) {
+		if (el) {
+			if (this.has(el)) {
+				if (canChangePlace) 
+					this.remove(el);
+				else 
+					return;
+			} 
+
 			if (!this.firstEl) {
 				this.firstEl = this.lastEl = el;
 				el[this.prevPropertyName] = undefined;
@@ -88,6 +129,7 @@ class List {
 				// el[this.prevPropertyName] = undefined;
 				// el[this.nextPropertyName] = undefined;
 			}
+
 			this.size++;
 		}
 	}
@@ -98,7 +140,7 @@ class List {
 	}
 
 	has(el) {
-		return (this.nextPropertyName in el);
+		return el && (this.nextPropertyName in el) && (this.prevPropertyName in el);
 	}
 
 	iterator() {

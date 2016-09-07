@@ -280,12 +280,6 @@ class Layer extends EventEmitter {
 
 		this.associate_element_to($el, hash);
 
-		$el[this._.safkCustomProperty] = $el[this._.safkCustomProperty] || {};
-
-		$el[this._.safkCustomProperty].layer = this;
-
-		$el[this._.safkCustomProperty].datumHash = hash;
-
 		return $el;
 	}
 
@@ -295,6 +289,9 @@ class Layer extends EventEmitter {
 	associate_element_to($el, hash) {
 		$el.setAttribute(this._.layerElementDatumHashAttribute, hash);
 		$el.setAttribute('unused', false);
+		$el[this._.safkCustomProperty] = $el[this._.safkCustomProperty] || {};
+		$el[this._.safkCustomProperty].layer = this;
+		$el[this._.safkCustomProperty].datumHash = hash;
 		// $el.datum = this.get_datum(hash);
 	}
 

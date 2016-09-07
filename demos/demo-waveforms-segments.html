@@ -5,6 +5,7 @@
 		<script type="text/javascript" src="../utils/event-emitter.js"></script>
 		<script type="text/javascript" src="../utils/linear-scale.js"></script>
 		<script type="text/javascript" src="../utils/list.js"></script>
+		<script type="text/javascript" src="../utils/waveforms-rendering-controller.js"></script>
 		<script type="text/javascript" src="../layers/layer.js"></script>
 		<script type="text/javascript" src="../layers/segments-layer-v2.js"></script>
 		<script type="text/javascript" src="../layers/waveforms-segments-layer.js"></script>
@@ -45,14 +46,16 @@
 			var data = [];
 
 			for (var i=0; i<100; i++) {
+				var bufferStart = (i) * 44100;
+				var bufferEnd   = (i+1) * 44100 - 1;
 				data.push({
 					id: i, 
-					time: i*10, 
+					time: Math.round(i*10), 
 					duration: 10, 
 					lowValue: 0, 
 					highValue: 1, 
-					bufferStart: (i) * 44000, 
-					bufferEnd: (i+1) * 44000
+					bufferStart: bufferStart, 
+					bufferEnd: bufferEnd
 				});
 			}
 
@@ -85,6 +88,8 @@
 				height: 100, width: 800
 			});
 
+			// l1.refreshOnScroll = true;
+
 			track1.appendChild(l1.layerDomEl);
 
 			l1.get_datum = (hash) => {
@@ -107,6 +112,35 @@
 				return d.audioBuffer.getChannelData(channelNumber);
 			});
 
+			l1.accessor('chunkDetail', (d, chunkBufferStart, chunkBufferEnd, elementName, $chunkEl) => {
+				/* 'horizontal', 'vertical' */
+				/* 
+				 * This accessor is used to specify the with and height 
+				 * of the html canvas where the waveform chunk will be drawn.
+				 */
+				switch (elementName) {
+					case 'horizontal': return 250;
+					case 'vertical': return l1.height;
+				}
+			});
+
+			l1.accessor('allowWaveformRedraw', (d) => {
+				return true;
+				return !editController.is_editing(l1, d);
+			});
+
+			l1.accessor('needChunkRedraw', (d, chunkBufferStart, chunkBufferEnd, $chunkEl) => {
+				return true;
+			});
+
+			// l1.accessor('isHighPriorityRedraw', (d) => {
+			// 	return editController.is_editing(l1, d);
+			// });
+
+			l1.accessor('forceWaveformRedraw', (d, $waveform) => {
+				return true;
+			});
+
 			l1.accessor('color', (d, elementName) => {
 				switch (elementName) {
 					case 'header': 
@@ -121,13 +155,6 @@
 					case 'segment': 
 						return 'rgb(255,255,255)';
 				}
-			});
-
-			l1.accessor('waveformDetail', (d, $waveform) => {
-				// var outerHTML = $waveform.parentElement;
-				// var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
-				// return width;
-				return 500;
 			});
 
 			l1.accessor('width', (d, elementName) => {
@@ -173,17 +200,8 @@
 					return 1;
 			});
 
-			l1.accessor('allowWaveformRedraw', (d) => {
-				// return true;
-				return !editController.is_editing(l1, d);
-			});
-
-			// l1.accessor('isHighPriorityRedraw', (d) => {
-			// 	return editController.is_editing(l1, d);
-			// });
-
 			var audioCtx = new AudioContext();
-			load_sample(audioCtx, 'http://localhost/OLA-TS.js/07.%20Around%20The%20World.mp3', 
+			load_sample(audioCtx, 'http://localhost/OLA-TS.js/14. Too Long.mp3', 
 				(decodedData) => {
 					var audioBuffer = decodedData;
 
