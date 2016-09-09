@@ -7,7 +7,7 @@ export class WaveformsRenderingController {
 	constructor(params = {}) {
 
 		this.queue = new List();
-		this._maxBufferIntervalPerImage = params.maxBufferIntervalPerImage || 20000;
+		this._maxBufferIntervalPerImage = params.maxBufferIntervalPerImage || 44100;
 		this.safkCustomProperty = params.safkCustomProperty || 'safk';
 
 		const renderingController = this;
@@ -183,10 +183,10 @@ export class WaveformsRenderingController {
 				$waveform[safk].currentWaveformLineWidth = newLineWidth;
 
 				if ($waveform[safk].activeChunksList.size === 0) {
-					console.log('fresh start');
+					// console.log('fresh start');
 					this.__fill_with_new_chunks($waveform, datum, layer, newBufferStart, newBufferEnd, this._maxBufferIntervalPerImage, newSampleRate, newLineColor, newLineWidth);
 				} else {
-					console.log('adapt what we have and add to both ends')
+					// console.log('adapt what we have and add to both ends')
 					// (1) check for redraw of the existing chunks.
 					this.__redraw_existing_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, this._maxBufferIntervalPerImage);
 					

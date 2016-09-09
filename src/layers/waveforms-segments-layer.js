@@ -4,7 +4,7 @@ import { SegmentsLayer } from './segments-layer-v2.js';
 import { WaveformsRenderingController } from '../utils/waveforms-rendering-controller.js';
 import { linear } from '../utils/linear-scale.js';
 
-export class WaveformSegmentsLayer extends SegmentsLayer {
+export class WaveformsSegmentsLayer extends SegmentsLayer {
 
 	constructor(params) {
 		super(params);
@@ -104,8 +104,8 @@ export class WaveformSegmentsLayer extends SegmentsLayer {
 			 * 'top-handler' 'waveform' 'waveform-overlay' 
 			 * 'header' 'segment' 'background'
 			 */
-			return (WaveformSegmentsLayer.zIndexDefaults[elementName] !== undefined)? 
-						WaveformSegmentsLayer.zIndexDefaults[elementName] :
+			return (WaveformsSegmentsLayer.zIndexDefaults[elementName] !== undefined)? 
+						WaveformsSegmentsLayer.zIndexDefaults[elementName] :
 						((d.zIndex !== undefined)? d.zIndex : 1);
 		});
 
@@ -121,13 +121,13 @@ export class WaveformSegmentsLayer extends SegmentsLayer {
 
 		this._.canvas = document.createElement('canvas');
 
-		WaveformSegmentsLayer.renderingController.add_layer(this);
+		WaveformsSegmentsLayer.renderingController.add_layer(this);
 	}
 
 	destroy() {
 		super.destroy();
 
-		WaveformSegmentsLayer.renderingController.remove_layer(this);
+		WaveformsSegmentsLayer.renderingController.remove_layer(this);
 	}
 
 	_convert_canvas_to_image($canvas, $image) {
@@ -254,7 +254,7 @@ export class WaveformSegmentsLayer extends SegmentsLayer {
 		$waveform.style.zIndex = this._.accessors.zIndex(datum, 'waveform');
 
 		if (this._.accessors.visible(datum, 'waveform')) {
-			WaveformSegmentsLayer.renderingController.request_waveform_render(this, $waveform, datum);
+			WaveformsSegmentsLayer.renderingController.request_waveform_render(this, $waveform, datum);
 		}
 
 		$waveform.style.display = (this._.accessors.visible(datum, 'waveform'))? 'block' : 'none';
@@ -327,9 +327,9 @@ export class WaveformSegmentsLayer extends SegmentsLayer {
 	}
 }
 
-WaveformSegmentsLayer.renderingController = new WaveformsRenderingController();
+WaveformsSegmentsLayer.renderingController = new WaveformsRenderingController();
 
-WaveformSegmentsLayer.zIndexDefaults = {
+WaveformsSegmentsLayer.zIndexDefaults = {
 	'background': 0, 
 	'waveform': 1, 
 	'waveform-overlay': 2, 
