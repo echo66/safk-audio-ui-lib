@@ -1,8 +1,10 @@
 'use strict'
 
-// import { SegmentsLayer } from 'segments-layer.js';
+import { SegmentsLayer } from './segments-layer-v2.js';
+import { WaveformsRenderingController } from '../utils/waveforms-rendering-controller.js';
+import { linear } from '../utils/linear-scale.js';
 
-class WaveformSegmentsLayer extends SegmentsLayer {
+export class WaveformSegmentsLayer extends SegmentsLayer {
 
 	constructor(params) {
 		super(params);
@@ -241,8 +243,8 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 	}
 
 	_configure_waveform($waveform, datum) {
-		var outerHTML = $waveform.parentElement;
-		var $image;
+		// var outerHTML = $waveform.parentElement;
+		// var $image;
 
 		$waveform.style.position = "absolute";
 		$waveform.style.overflow = "hidden";
@@ -261,9 +263,9 @@ class WaveformSegmentsLayer extends SegmentsLayer {
 	}
 
 	_configure_waveform_overlay($waveformOverlay, datum) {
-		var outerHTML = $waveformOverlay.parentElement;
-		var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
-		var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
+		// var outerHTML = $waveformOverlay.parentElement;
+		// var width = Number(outerHTML.style.width.substring(0, outerHTML.style.width.length-2));
+		// var height = Number(outerHTML.style.height.substring(0, outerHTML.style.height.length-2));
 		$waveformOverlay.style.position = "absolute";
 		$waveformOverlay.style.left = "0";
 		$waveformOverlay.style.top = "0";

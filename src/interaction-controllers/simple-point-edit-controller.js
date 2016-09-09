@@ -1,6 +1,8 @@
 'use strict'
 
-class SimplePointEditController extends SimpleEditController {
+import { SimpleEditController } from './simple-edit-controller.js';
+
+export class SimplePointEditController extends SimpleEditController {
 	constructor(params) {
 		super(params);
 
@@ -22,7 +24,7 @@ class SimplePointEditController extends SimpleEditController {
 		}
 
 		if (this._.allow.yEdit) {
-			let newValue = this.__edit(datum, 'value', dx, this._.layer._.valueToPixel);
+			let newValue = this.__edit(datum, 'value', -dy, this._.layer._.valueToPixel);
 			(!isNaN(newValue)) && this._.accessors.value(datum, newValue);
 		}
 	}

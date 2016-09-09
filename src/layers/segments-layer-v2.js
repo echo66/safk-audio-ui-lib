@@ -1,8 +1,8 @@
 'use strict'
 
-// import { Layer } from 'layer.js';
+import { Layer } from './layer.js';
 
-class SegmentsLayer extends Layer {
+export class SegmentsLayer extends Layer {
 
 	constructor(params) {
 		super({

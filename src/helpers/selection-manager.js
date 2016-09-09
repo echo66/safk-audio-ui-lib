@@ -1,6 +1,8 @@
 'use strict'
 
-class SelectionManager extends EventEmitter {
+import { EventEmitter } from '../utils/event-emitter.js';
+
+export class SelectionManager extends EventEmitter {
 	constructor() {
 		super();
 		this.selectedData = new Map();
@@ -48,7 +50,7 @@ class SelectionManager extends EventEmitter {
 	}
 
 	unselect_all(layer, eachCallback, finalCallback) {
-		const that = this;
+		// const that = this;
 		var selectedDataOnLayer = this.selectedData.get(layer);
 		if (selectedDataOnLayer) {
 			var it = selectedDataOnLayer.values();
@@ -68,7 +70,7 @@ class SelectionManager extends EventEmitter {
 	}
 
 	apply_on_selected(layer, eachCallback, finalCallback) {
-		const that = this;
+		// const that = this;
 		this.selectedData.forEach((selectedData, layer) => {
 			selectedData.forEach((hash) => {
 				var datum = layer.get_datum(hash);

@@ -1,8 +1,8 @@
 'use strict'
 
-// import { Layer } from 'layer.js';
+import { Layer } from './layer.js';
 
-class PointsLayer extends Layer {
+export class PointsLayer extends Layer {
 
 	constructor(params) {
 		super({
@@ -16,24 +16,31 @@ class PointsLayer extends Layer {
 			layerElementDatumHashAttribute: 'data-hash', 
 		});
 
+		const that = this;
+
 		this._.$pointsSVG = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
 
 		this._.layerElementsParent = this._.$pointsSVG;
 
 		this._.$el.children[0].appendChild(this._.$pointsSVG);
 
-		this._.$pointsSVG.setAttributeNS(null, 'width', this.width);
-		this._.$pointsSVG.setAttributeNS(null, 'height', this.height);
-		this._.$pointsSVG.style.position = "absolute";
-		this._.$pointsSVG.style.zIndex = 1;
-		this._.$pointsSVG.style.transform = "scale(1,-1)";
+		this._configure_svg_container(this._.$pointsSVG);
 
-		this._.onchange = (property, newValue) => {
-			if (property === 'width' || property === 'height') {
-				this._.$pointsSVG.setAttributeNS(null, 'width', this.width);
-				this._.$pointsSVG.setAttributeNS(null, 'height', this.height);
-			}
-		};
+		// this._.onchange = (property, newValue) => {
+		// 	if (property === 'width' || property === 'height') {
+		// 		this._.$pointsSVG.setAttributeNS(null, 'width', this.width);
+		// 		this._.$pointsSVG.setAttributeNS(null, 'height', this.height);
+		// 	}
+		// };
+
+		this.on('changed-property-width', () => {
+			this._.$pointsSVG.setAttributeNS(null, 'width', this.width);
+			this._.$pointsSVG.setAttributeNS(null, 'height', this.height);
+		});
+
+		this.on('changed-property-timeDomain', () => {
+			that._configure_svg_container(that._.$pointsSVG);
+		});
 
 		// DEFINE ACCESSORS
 		{
@@ -92,6 +99,15 @@ class PointsLayer extends Layer {
 			});
 		}
 
+	}
+
+	_configure_svg_container($container) {
+		$container.setAttributeNS(null, 'width', this.width);
+		$container.setAttributeNS(null, 'height', this.height);
+		$container.style.position = "absolute";
+		$container.style.zIndex = 1;
+		$container.style.left = (this._.timeToPixel(this._.timeOffset)) + "px";
+		$container.style.transform = "scale(1,-1) translate(" + (this._.timeToPixel(-this._.timeOffset)) + ",0)";
 	}
 
 	_configure_circle(circle, datum) {

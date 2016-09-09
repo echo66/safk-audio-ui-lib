@@ -1,6 +1,8 @@
 'use strict'
 
-class SimpleSegmentEditController extends SimpleEditController {
+import { SimpleEditController } from './simple-edit-controller.js';
+
+export class SimpleSegmentEditController extends SimpleEditController {
 
 	constructor(params) {
 		super(params);

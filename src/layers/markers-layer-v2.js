@@ -1,8 +1,8 @@
 'use strict'
 
-// import { Layer } from 'layer.js';
+import { Layer } from './layer.js';
 
-class MarkersLayer extends Layer {
+export class MarkersLayer extends Layer {
 
 	constructor(params) {
 		super({
@@ -16,7 +16,7 @@ class MarkersLayer extends Layer {
 			layerElementDatumHashAttribute: 'data-hash'
 		});
 
-		const that = this;
+		// const that = this;
 
 		// DEFINE ACCESSORS
 		{

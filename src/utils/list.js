@@ -1,6 +1,6 @@
 'use strict'
 
-class List {
+export class List {
 
 	constructor(propertyPrefix) { 
 		this.firstEl = undefined;

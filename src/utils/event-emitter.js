@@ -1,3 +1,5 @@
+'use strict'
+
 /**
  * @typedef {object} EventEmitterListenerFunc
  * @property {boolean} once
@@ -11,7 +13,7 @@
  * @property {Object.<string, EventEmitterListenerFunc[]>} _listeners
  * @property {string[]} events
  */
-class EventEmitter {
+export class EventEmitter {
 
     /**
      * @constructor

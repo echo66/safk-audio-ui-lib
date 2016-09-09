@@ -1,6 +1,8 @@
 'use strict'
 
-class SimpleTimeAxisGenerator extends AbstractTimeAxisGenerator {
+import { AbstractTimeAxisGenerator } from './abstract-time-axis-generator.js';
+
+export class SimpleTimeAxisGenerator extends AbstractTimeAxisGenerator {
 	constructor(params) {
 
 		params = params || {};

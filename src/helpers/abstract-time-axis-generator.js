@@ -1,6 +1,6 @@
 'use strict'
 
-class AbstractTimeAxisGenerator {
+export class AbstractTimeAxisGenerator {
 	constructor() {
 		this._ = {};
 		this._.itData = {

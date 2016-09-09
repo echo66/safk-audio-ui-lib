@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<script src="../dist/bundle.js"></script>
+	</head>
+
+	<body>
+		<div id="track1" style="position: relative; width: 1000px;"></div>
+		<div id="scroller"></div>
+
+		<script type="text/javascript">
+			var data1 = [];
+			var data2 = [];
+			
+			for (var i=0; i<100; i++) {
+				let c = document.createElement('span');
+				c.innerHTML = "s" + i;
+				data1.push({
+					id: i, 
+					time: i * 2, 
+					duration: 1, 
+					backgroundColor: 'cyan', 
+					innerHTML: c, 
+					lowValue: 0, 
+					highValue: 1
+				});
+				data2.push({
+					id: i, 
+					time: i * 2, 
+					duration: 1, 
+					backgroundColor: 'orange', 
+					innerHTML: c, 
+					lowValue: 0, 
+					highValue: 1
+				});
+			}
+			
+			function create_html_segments_layer(dataset, $trackEl, width, height) {
+				var layer = new HTMLSegmentsLayer({
+					width: width || 1000, height: height || 100
+				});
+
+				$trackEl.appendChild(layer.layerDomEl);
+
+				layer.get_datum = (hash) => {
+					for (let i=0; i<dataset.length; i++) 
+						if ((dataset[i].id + "") === hash)
+							return dataset[i];
+				};
+
+				layer.get_hash = (datum) => {
+					return datum.id + "";
+				};
+
+				dataset.forEach((datum) => layer.set(datum));
+
+				var editController = new SimpleSegmentEditController({ 
+					layer: layer, 
+					allowXEdit: true, 
+					allowYEdit: true
+				});
+
+				layer.editController = editController;
+
+				return layer;
+			}
+
+			var l1 = create_html_segments_layer(data1, track1, 1000, 100);
+			var l2 = create_html_segments_layer(data2, track1, 1000, 100);
+			var axis = new TimeAxisLayer({ height: 200, width: 1000 });
+			var gen1 = new SimpleTimeAxisGenerator();
+			var axes = {
+				axes: [gen1], 
+				index: undefined, 
+				entry: { value: undefined, done: undefined }
+			};
+			axes.start = function() {
+				this.index = 0;
+			}.bind(axes);
+			axes.next = function() {
+				if (this.index < this.axes.length) {
+					this.entry.value = this.axes[this.index++];
+					this.entry.done = false;
+				} else {
+					this.entry.value = undefined;
+					this.entry.done = true;
+				}
+				return this.entry;
+			}.bind(axes);
+			axes.stop = function() {
+				this.index = undefined;
+				this.entry.value = undefined;
+				this.entry.done = undefined;
+			}.bind(axes);
+			axis.defaultIterator = axes;
+			axis.get_datum = (hash) => gen1;
+			axis.get_hash = (datum) => "axis1";
+			track1.appendChild(axis.layerDomEl);
+
+			l1.layerDomEl.style.overflow = "hidden";
+			l2.layerDomEl.style.overflow = "hidden";
+			axis.layerDomEl.style.position = "absolute";
+			axis.layerDomEl.style.top = "0px";
+
+
+			var scroller = new TimeScroller({
+				height: 10, width: 800
+			});
+			scroller.availableTimeRange = [0, 1000];
+			scroller.add_target_layer(l1);
+			scroller.add_target_layer(l2);
+			scroller.add_target_layer(axis);
+			document.getElementById('scroller').appendChild(scroller.layerDomEl);
+
+
+		</script>
+		
+	</body>
+</html>

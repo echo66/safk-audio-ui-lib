@@ -1,0 +1,27 @@
+{
+  "name": "safk-audio-ui-lib",
+  "version": "1.0.0",
+  "description": "",
+  "main": "entry.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack && uglifyjs ./dist/bundle.js -c -m -o ./dist/bundle.min.js --source-map ./dist/bundle.min.js.map"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/echo66/safk-audio-ui-lib.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/echo66/safk-audio-ui-lib/issues"
+  },
+  "homepage": "https://github.com/echo66/safk-audio-ui-lib#readme",
+  "devDependencies": {
+    "babel-core": "^6.14.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.14.0",
+    "uglify-js": "^2.7.3",
+    "webpack": "^1.13.2"
+  }
+}

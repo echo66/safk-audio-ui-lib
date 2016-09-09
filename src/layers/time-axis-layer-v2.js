@@ -1,8 +1,8 @@
 'use strict'
 
-// import { Layer } from 'layer.js';
+import { Layer } from './layer.js';
 
-class TimeAxisLayer extends Layer {
+export class TimeAxisLayer extends Layer {
 
 	constructor(params) {
 		super({

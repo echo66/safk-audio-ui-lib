@@ -1,8 +1,10 @@
 'use strict'
 
-// import { List } from './list.js';
+import { List } from '../utils/list.js';
+import { EventEmitter } from '../utils/event-emitter.js';
+import { linear } from '../utils/linear-scale.js';
 
-class Layer extends EventEmitter {
+export class Layer extends EventEmitter {
 
 	/* 
 	 {
@@ -110,6 +112,12 @@ class Layer extends EventEmitter {
 		this._.valueToPixel.domain(this._.valueDomain).range([0, layerHeight]);
 
 		this._.accessors = {};
+		this.accessor('layer-width', ($layer, newWidth) => {
+			// TODO
+		});
+		this.accessor('layer-height', ($layer, newHeight) => {
+			// TODO
+		});
 
 		this._.autoRefresh = true;
 		this._.refreshOnScroll = false;
@@ -185,7 +193,7 @@ class Layer extends EventEmitter {
 	}
 
 	update(iterator, canOverwrite) {
-		const that = this;
+		// const that = this;
 
 		let alreadyVisible = this.visible;
 
@@ -360,9 +368,9 @@ class Layer extends EventEmitter {
 		if (this.autoRefresh)
 			this.update();
 
-		this.emit('change', 'width', layerWidth);
-
 		this._.onchange && this._.onchange('width', layerWidth);
+
+		this.emit('changed-property-width');
 	}
 
 	get height() {
@@ -385,9 +393,9 @@ class Layer extends EventEmitter {
 		if (this.autoRefresh)
 			this.update();
 
-		this.emit('change', 'height', layerHeight);
-
 		this._.onchange && this._.onchange('height', layerHeight);
+
+		this.emit('changed-property-height');
 	}
 
 	get timeDomain() {
@@ -420,6 +428,8 @@ class Layer extends EventEmitter {
 				this.update();
 			}
 		}
+
+		this.emit('changed-property-timeDomain');
 	}
 
 	get visible() {
@@ -434,6 +444,8 @@ class Layer extends EventEmitter {
 			this._.$el.style.display = "block";
 		else
 			this._.$el.style.display = "none";
+
+		this.emit('changed-property-visible');
 	}
 
 	get valueDomain() {
@@ -466,6 +478,8 @@ class Layer extends EventEmitter {
 				this.update();
 			}
 		}
+
+		this.emit('changed-property-valueDomain');
 	}
 
 	get layerDomEl() {
@@ -496,6 +510,8 @@ class Layer extends EventEmitter {
 		} else {
 			this._.$el.style.pointerEvents = 'auto';
 		}
+
+		this.emit('changed-property-silent');
 	}
 
 }

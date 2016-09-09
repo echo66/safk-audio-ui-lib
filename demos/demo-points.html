@@ -2,48 +2,23 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<script type="text/javascript" src="../utils/event-emitter.js"></script>
-		<script type="text/javascript" src="../utils/linear-scale.js"></script>
-		<script type="text/javascript" src="../utils/list.js"></script>
-		<script type="text/javascript" src="../layers/layer.js"></script>
-		<script type="text/javascript" src="../layers/points-layer-v2.js"></script>
-		<script type="text/javascript" src="../helpers/selection-manager.js"></script>
-		<script type="text/javascript" src="../interaction-controllers/simple-edit-controller.js"></script>
-		<script type="text/javascript" src="../interaction-controllers/simple-point-edit-controller.js"></script>
+		<script src="../dist/bundle.js"></script>
 	</head>
 
 	<body>
 		<ttrack id="track1" style="position: relative; height: 100px; width: 500px;">
 		</ttrack>
+		<div id="scroller"></div>
 
 		<script type="text/javascript">
-			var data = [
-				{ 
-					id: 0, 
-					time: 0, 
+			var data = [];
+			for (var i=0; i<100; i++) {
+				data.push({
+					id: i, 
+					time: i, 
 					value: Math.random()
-				}, 
-				{ 
-					id: 1, 
-					time: 2, 
-					value: Math.random()
-				}, 
-				{ 
-					id: 2, 
-					time: 4, 
-					value: Math.random()
-				}, 
-				{ 
-					id: 3, 
-					time: 6, 
-					value: Math.random()
-				}, 
-				{ 
-					id: 4, 
-					time: 8, 
-					value: Math.random()
-				}, 
-			];
+				});
+			}
 
 			var l1 = new PointsLayer({
 				height: 100, width: 500
@@ -68,6 +43,13 @@
 				allowXEdit: true, 
 				allowYEdit: true
 			});
+
+			var scroller = new TimeScroller({
+				height: 10, width: 800
+			});
+			scroller.availableTimeRange = [0, 1000];
+			scroller.add_target_layer(l1);
+			document.getElementById('scroller').appendChild(scroller.layerDomEl);
 
 		</script>
 		

@@ -1,6 +1,8 @@
 'use strict'
 
-class WaveformsRenderingController {
+import { List } from './list.js';
+
+export class WaveformsRenderingController {
 
 	constructor(params = {}) {
 
@@ -243,11 +245,11 @@ class WaveformsRenderingController {
 	// NEW STUFF
 
 	__configure_waveform_chunk_props($chunkEl, bufStart, bufEnd, sR, lColor, lWidth, cWidth, cHeight) {
-		var $waveform = $chunkEl.parentElement;
-		var $segment  = $waveform.parentElement;
+		// var $waveform = $chunkEl.parentElement;
+		// var $segment  = $waveform.parentElement;
 		var safk = this.safkCustomProperty;
-		var layer = $segment[safk].layer;
-		var hash = $segment[safk].datumHash;
+		// var layer = $segment[safk].layer;
+		// var hash = $segment[safk].datumHash;
 
 		$chunkEl[safk] = $chunkEl[safk] || {};
 		$chunkEl[safk].currentBufferStart 			= bufStart;
@@ -312,11 +314,11 @@ class WaveformsRenderingController {
 	}
 
 	__fill_with_new_chunks($waveform, datum, layer, bufferStart, bufferEnd, bufferCursorHopSize, sampleRate, lineColor, lineWidth) {
-		var safk = this.safkCustomProperty;
+		// var safk = this.safkCustomProperty;
 		var chunkBufferStart = bufferStart;
 		var chunkBufferEnd;
 
-		var waveformTotalWidth = Number($waveform.style.width.substring(0, $waveform.style.width.length-2));
+		// var waveformTotalWidth = Number($waveform.style.width.substring(0, $waveform.style.width.length-2));
 
 		while (chunkBufferStart <= bufferEnd) {
 			chunkBufferEnd = Math.min(chunkBufferStart + bufferCursorHopSize, bufferEnd);

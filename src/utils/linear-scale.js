@@ -1,4 +1,6 @@
-function linear() {
+'use strict'
+
+export function linear() {
 	let _domain = [0, 1];
 	let _range = [0, 1];
 

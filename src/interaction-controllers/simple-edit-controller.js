@@ -1,6 +1,10 @@
 'use strict'
 
-class SimpleEditController extends EventEmitter {
+import { EventEmitter } from '../utils/event-emitter.js';
+import { List } from '../utils/list.js';
+import { SelectionManager } from '../helpers/selection-manager.js';
+
+export class SimpleEditController extends EventEmitter {
 	
 	constructor(params) {
 		super();

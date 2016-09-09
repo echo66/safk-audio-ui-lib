@@ -1,6 +1,10 @@
 'use strict'
 
-class TimeScroller extends EventEmitter {
+import { EventEmitter } from '../utils/event-emitter.js';
+import { SegmentsLayer } from '../layers/segments-layer-v2.js';
+import { SimpleSegmentEditController } from '../interaction-controllers/simple-segment-edit-controller.js';
+
+export class TimeScroller extends EventEmitter {
 	constructor(params) {
 		super();
 
