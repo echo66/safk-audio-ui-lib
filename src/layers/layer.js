@@ -44,26 +44,72 @@ class Layer extends EventEmitter {
 		this._.$el[that._.safkCustomProperty] = {};
 		this._.$el[that._.safkCustomProperty].layer = this;
 
-		this._.$container = document.createElement('div');
-		this._.$container.setAttribute('name', 'layer-elements-container');
-		this._.$container.style.position = "relative";
-		this._.$container.style.width = layerWidth + "px";
-		this._.$container.style.height = layerHeight + "px";
-		this._.$container.style.left = "0px";
-		this._.$container.style.top = "0px";
+		this._.create_main_container_element =  params.create_main_container_element || function() {
+			var $container = document.createElement('div');
+			$container.setAttribute('name', 'layer-elements-container');
+			$container.style.position = "relative";
+			$container.style.width = layerWidth + "px";
+			$container.style.height = layerHeight + "px";
+			$container.style.left = "0px";
+			$container.style.top = "0px";
 
-		this._.layerElementsParent = this._.$container || params.layerElementsParent;
+			return $container;
+		};
+
+		this._.$container = this._.create_main_container_element({ layerWidth: layerWidth, layerHeight: layerHeight });
+		this._.main_container_element_attribute = params.main_container_element_attribute || function($container, attribute, value) {
+			switch (attribute) {
+				case 'top': 
+					$container.style.top = value;
+					break;
+				case 'left': 
+					$container.style.left = value;
+					break;
+				case 'height': 
+					$container.style.height = value;
+					break;
+				case 'width': 
+					$container.style.width = value;
+					break;
+			}
+		};
+		this._.add_element_to_main_container_element = params.add_element_to_main_container_element || function($container, $el) {
+			$container.appendChild($el);
+		};
 
 		this._.$el.appendChild(this._.$container);
 
-		this._.$interactions = document.createElement('div');
-		this._.$interactions.setAttribute('name', 'layer-interactions-container');
-		this._.$interactions.style.position = "relative";
-		this._.$interactions.style.width = layerWidth + "px";
-		this._.$interactions.style.height = layerHeight + "px";
-		this._.$interactions.style.left = "0px";
-		this._.$interactions.style.top = "0px";
-		this._.$interactions.style.pointerEvents = "none";
+
+		this._.create_interactions_container_element = params.create_interactions_container_element || function() {
+			var $interactions = document.createElement('div');
+			$interactions.setAttribute('name', 'layer-interactions-container');
+			$interactions.style.position = "relative";
+			$interactions.style.width = layerWidth + "px";
+			$interactions.style.height = layerHeight + "px";
+			$interactions.style.left = "0px";
+			$interactions.style.top = "0px";
+			$interactions.style.pointerEvents = "none";
+
+			return $interactions;
+		};
+
+		this._.$interactions = this._.create_interactions_container_element({ layerWidth: layerWidth, layerHeight: layerHeight });
+		this._.interactions_container_element_attribute = params.interactions_container_element_attribute || function($interactions, attribute, value) {
+			switch (attribute) {
+				case 'top': 
+					$interactions.style.top = value;
+					break;
+				case 'left': 
+					$interactions.style.left = value;
+					break;
+				case 'height': 
+					$interactions.style.height = value;
+					break;
+				case 'width': 
+					$interactions.style.width = value;
+					break;
+			}
+		};
 
 		this._.$el.appendChild(this._.$interactions);
 
@@ -129,12 +175,6 @@ class Layer extends EventEmitter {
 		this._.valueToPixel.domain(this._.valueDomain).range([0, layerHeight]);
 
 		this._.accessors = {};
-		this.accessor('layer-width', ($layer, newWidth) => {
-			// TODO
-		});
-		this.accessor('layer-height', ($layer, newHeight) => {
-			// TODO
-		});
 
 		this._.autoRefresh = true;
 		this._.refreshOnScroll = false;
@@ -249,7 +289,7 @@ class Layer extends EventEmitter {
 		$el.style.display = "none";
 
 		if (!$el.parentElement) 
-			this._.layerElementsParent.appendChild($el);
+			this._.add_element_to_main_container_element(this._.$container, $el);
 
 		return $el;
 	}
@@ -412,8 +452,8 @@ class Layer extends EventEmitter {
 		this._.timeToPixel.range([0, layerWidth]);
 
 		this._.$el.style.width = layerWidth + "px";
-		this._.$container.style.width = layerWidth + "px";
-		this._.$interactions.style.width = layerWidth + "px";
+		this._.main_container_element_attribute(this._.$container, 'width', layerWidth + "px");
+		this._.interactions_container_element_attribute(this._.$interactions, 'width', layerWidth + "px");
 
 		if (this.autoRefresh)
 			this.update();
@@ -439,8 +479,8 @@ class Layer extends EventEmitter {
 		this._.valueToPixel.range([0, layerHeight]);
 
 		this._.$el.style.height = layerHeight + "px";
-		this._.$container.style.height = layerHeight + "px";
-		this._.$interactions.style.height = layerHeight + "px";
+		this._.main_container_element_attribute(this._.$container, 'height', layerHeight + "px");
+		this._.interactions_container_element_attribute(this._.$interactions, 'height', layerHeight + "px");
 
 		if (this.autoRefresh)
 			this.update();
@@ -467,8 +507,10 @@ class Layer extends EventEmitter {
 
 		this._.timeToPixel.domain(this._.timeDomain);
 
-		this._.$container.style.left = (this._.timeToPixel(-this._.timeOffset)) + 'px';
-		this._.$interactions.style.left = this._.$container.style.left;
+		this._.main_container_element_attribute(this._.$container, 'left', (this._.timeToPixel(-this._.timeOffset)) + 'px');
+		this._.interactions_container_element_attribute(this._.$interactions, 'left', (this._.timeToPixel(-this._.timeOffset)) + 'px');
+
+		this.emit('changed-property-timeDomain');
 
 		if (sameInterval) {
 			if (this.refreshOnScroll) {
@@ -482,7 +524,7 @@ class Layer extends EventEmitter {
 			}
 		}
 
-		this.emit('changed-property-timeDomain');
+		// this.emit('changed-property-timeDomain');
 	}
 
 	get visible() {
@@ -518,8 +560,10 @@ class Layer extends EventEmitter {
 
 		this._.valueToPixel.domain(this._.valueDomain);
 
-		this._.$container.style.top = (this._.valueToPixel(this._.valueOffset)) + 'px';
-		this._.$interactions.style.top = this._.$container.style.top;
+		this._.main_container_element_attribute(this._.$container, 'top', (this._.valueToPixel(this._.valueOffset)) + "px");
+		this._.interactions_container_element_attribute(this._.$interactions, 'top', (this._.valueToPixel(this._.valueOffset)) + "px");
+
+		this.emit('changed-property-valueDomain');
 
 		if (sameInterval) {
 			if (this.refreshOnScroll) {
@@ -533,7 +577,7 @@ class Layer extends EventEmitter {
 			}
 		}
 
-		this.emit('changed-property-valueDomain');
+		// this.emit('changed-property-valueDomain');
 	}
 
 	get layerDomEl() {
