@@ -1,6 +1,6 @@
 'use strict'
 
-export class AbstractTimeAxisGenerator {
+class AbstractTimeAxisGenerator {
 	constructor() {
 		this._ = {};
 		this._.itData = {
@@ -155,3 +155,5 @@ export class AbstractTimeAxisGenerator {
 		_.nextValue.textOffset = undefined;
 	}
 }
+
+export { AbstractTimeAxisGenerator };

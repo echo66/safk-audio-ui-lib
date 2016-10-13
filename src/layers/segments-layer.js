@@ -2,19 +2,22 @@
 
 import { Layer } from './layer.js';
 
-export class SegmentsLayer extends Layer {
+class SegmentsLayer extends Layer {
 
 	constructor(params) {
 		super({
 			height: params.height || 100, 
 			width: params.width || 500, 
-			defaultIterator: undefined, 
+			defaultIterator: params.defaultIterator || undefined, 
 			timeDomain: params.timeDomain || [0, 20], 
 			valueDomain: params.valueDomain || [0, 1], 
 			layerTagName: params.layerTagName || 'layer', 
 			layerElementTagName: params.layerElementTagName || 'segment', 
-			layerElementDatumHashAttribute: params.layerElementTagName || 'data-hash'
+			layerElementDatumHashAttribute: params.layerElementDatumHashAttribute || 'data-hash'
 		});
+
+		this._.backgroundTagName = params.backgroundTagName || 'background';
+		this._.handlerTagName = params.handlerTagName || 'handler';
 
 		const that = this;
 		// DEFINE ACCESSORS
@@ -215,17 +218,19 @@ export class SegmentsLayer extends Layer {
 
 		$segment[this._.safkCustomProperty] = $segment[this._.safkCustomProperty] || {};
 
-		if (!$segment[this._.safkCustomProperty].background) $segment.appendChild($segment[this._.safkCustomProperty].background = document.createElement('background'));
+		if (!$segment[this._.safkCustomProperty].background) $segment.appendChild($segment[this._.safkCustomProperty].background = document.createElement(this._.backgroundTagName)); 
 
-		if (!$segment[this._.safkCustomProperty].leftHandler) $segment.appendChild($segment[this._.safkCustomProperty].leftHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].leftHandler) $segment.appendChild($segment[this._.safkCustomProperty].leftHandler = document.createElement(this._.handlerTagName));
 
-		if (!$segment[this._.safkCustomProperty].rightHandler) $segment.appendChild($segment[this._.safkCustomProperty].rightHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].rightHandler) $segment.appendChild($segment[this._.safkCustomProperty].rightHandler = document.createElement(this._.handlerTagName));
 
-		if (!$segment[this._.safkCustomProperty].topHandler) $segment.appendChild($segment[this._.safkCustomProperty].topHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].topHandler) $segment.appendChild($segment[this._.safkCustomProperty].topHandler = document.createElement(this._.handlerTagName));
 
-		if (!$segment[this._.safkCustomProperty].bottomHandler) $segment.appendChild($segment[this._.safkCustomProperty].bottomHandler = document.createElement('handler'));
+		if (!$segment[this._.safkCustomProperty].bottomHandler) $segment.appendChild($segment[this._.safkCustomProperty].bottomHandler = document.createElement(this._.handlerTagName));
 
 
 		return $segment;
 	}
 }
+
+export { SegmentsLayer };

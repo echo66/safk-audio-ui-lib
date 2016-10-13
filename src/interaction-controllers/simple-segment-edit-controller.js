@@ -2,26 +2,28 @@
 
 import { SimpleEditController } from './simple-edit-controller.js';
 
-export class SimpleSegmentEditController extends SimpleEditController {
+class SimpleSegmentEditController extends SimpleEditController {
 
 	constructor(params) {
 		super(params);
 
-		this._.accessors.duration = (d, v) => {
+		var accessors = params.accessors || {};
+
+		this._.accessors.duration = accessors.duration || ((d, v) => {
 			if (!isNaN(v)) 
 					d.duration = v;
 				return d.duration;
-		};
-		this._.accessors.lowValue = (d, v) => {
+		});
+		this._.accessors.lowValue = accessors.lowValue || ((d, v) => {
 			if (!isNaN(v)) 
 					d.lowValue = v;
 				return d.lowValue;
-		};
-		this._.accessors.highValue = (d, v) => {
+		});
+		this._.accessors.highValue = accessors.highValue || ((d, v) => {
 			if (!isNaN(v)) 
 					d.highValue = v;
 				return d.highValue;
-		};
+		});
 
 		this._.allow = {};
 		this._.allow.xEdit = (params.allowXEdit !== undefined)? params.allowXEdit : true;
@@ -39,8 +41,8 @@ export class SimpleSegmentEditController extends SimpleEditController {
 				switch (handlerName) {
 					case 'left': 
 						if (this._.allow.xEdit) {
-							let newStartTime = this.__edit(datum, 'time', dx, timeToPixel);
-							let newDuration = this.__edit(datum, 'duration', -dx, timeToPixel);
+							let newStartTime = this._generate_datum_value(datum, 'time', dx, timeToPixel);
+							let newDuration = this._generate_datum_value(datum, 'duration', -dx, timeToPixel);
 
 							(!isNaN(newStartTime)) && this._.accessors.time(datum, newStartTime);
 							(!isNaN(newDuration)) && (newDuration > 0) && this._.accessors.duration(datum, newDuration);
@@ -48,19 +50,19 @@ export class SimpleSegmentEditController extends SimpleEditController {
 						break;
 					case 'right': 
 						if (this._.allow.xEdit) {
-							let newDuration = this.__edit(datum, 'duration', dx, timeToPixel);
+							let newDuration = this._generate_datum_value(datum, 'duration', dx, timeToPixel);
 							(!isNaN(newDuration)) && (newDuration > 0) && this._.accessors.duration(datum, newDuration);
 						}
 						break;
 					case 'top': 
 						if (this._.allow.yEdit) {
-							let newHighValue = this.__edit(datum, 'highValue', -dy, valueToPixel);
+							let newHighValue = this._generate_datum_value(datum, 'highValue', -dy, valueToPixel);
 							(!isNaN(newHighValue)) && this._.accessors.highValue(datum, newHighValue);
 						}
 						break;
 					case 'bottom': 
 						if (this._.allow.yEdit) {
-							let newLowValue = this.__edit(datum, 'lowValue', -dy, valueToPixel);
+							let newLowValue = this._generate_datum_value(datum, 'lowValue', -dy, valueToPixel);
 							(!isNaN(newLowValue)) && this._.accessors.lowValue(datum, newLowValue);
 						}
 						break;
@@ -69,12 +71,12 @@ export class SimpleSegmentEditController extends SimpleEditController {
 
 			default: 
 				if (this._.allow.xEdit) {
-					let newStartTime = this.__edit(datum, 'time', dx, timeToPixel);
+					let newStartTime = this._generate_datum_value(datum, 'time', dx, timeToPixel);
 					(!isNaN(newStartTime)) && this._.accessors.time(datum, newStartTime);
 				}
 				if (this._.allow.yEdit) {
-					let newLowValue = this.__edit(datum, 'lowValue', -dy, valueToPixel);
-					let newHighValue = this.__edit(datum, 'highValue', -dy, valueToPixel);
+					let newLowValue = this._generate_datum_value(datum, 'lowValue', -dy, valueToPixel);
+					let newHighValue = this._generate_datum_value(datum, 'highValue', -dy, valueToPixel);
 
 					(!isNaN(newLowValue)) && this._.accessors.lowValue(datum, newLowValue);
 					(!isNaN(newHighValue)) && this._.accessors.highValue(datum, newHighValue);
@@ -85,3 +87,5 @@ export class SimpleSegmentEditController extends SimpleEditController {
 	}
 
 }
+
+export { SimpleSegmentEditController };

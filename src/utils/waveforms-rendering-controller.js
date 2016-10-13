@@ -2,12 +2,11 @@
 
 import { List } from './list.js';
 
-export class WaveformsRenderingController {
+class WaveformsRenderingController {
 
 	constructor(params = {}) {
 
 		this.queue = new List();
-		this._maxBufferIntervalPerImage = params.maxBufferIntervalPerImage || 44100;
 		this.safkCustomProperty = params.safkCustomProperty || 'safk';
 
 		const renderingController = this;
@@ -68,15 +67,6 @@ export class WaveformsRenderingController {
 		};
 
 		requestAnimationFrame(timeoutFn);
-	}
-
-	get maxBufferIntervalPerImage() {
-		return this._maxBufferIntervalPerImage;
-	}
-
-	set maxBufferIntervalPerImage(v) {
-		this._maxBufferIntervalPerImage = v;
-		// TODO 
 	}
 
 	_get_next_scheduled() {
@@ -181,20 +171,21 @@ export class WaveformsRenderingController {
 				$waveform[safk].currentSampleRate = newSampleRate;
 				$waveform[safk].currentWaveformLineColor = newLineColor;
 				$waveform[safk].currentWaveformLineWidth = newLineWidth;
+				var numberOfSamplesPerChunk = layer._.accessors.numberOfSamplesPerChunk(datum);
 
 				if ($waveform[safk].activeChunksList.size === 0) {
 					// console.log('fresh start');
-					this.__fill_with_new_chunks($waveform, datum, layer, newBufferStart, newBufferEnd, this._maxBufferIntervalPerImage, newSampleRate, newLineColor, newLineWidth);
+					this.__fill_with_new_chunks($waveform, datum, layer, newBufferStart, newBufferEnd, numberOfSamplesPerChunk, newSampleRate, newLineColor, newLineWidth);
 				} else {
 					// console.log('adapt what we have and add to both ends')
 					// (1) check for redraw of the existing chunks.
-					this.__redraw_existing_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, this._maxBufferIntervalPerImage);
+					this.__redraw_existing_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, numberOfSamplesPerChunk);
 					
 					// (2) add chunks to the left.
-					this.__fill_left_with_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, this._maxBufferIntervalPerImage);
+					this.__fill_left_with_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, numberOfSamplesPerChunk);
 
 					// (3) add chunks to thr right.
-					this.__fill_right_with_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, this._maxBufferIntervalPerImage);
+					this.__fill_right_with_chunks($waveform, datum, newSampleRate, layer, newLineColor, newLineWidth, numberOfSamplesPerChunk);
 				}
 
 			} 
@@ -429,9 +420,6 @@ export class WaveformsRenderingController {
 		}
 	}
 
-
-
-
-	
-
 }
+
+export { WaveformsRenderingController };

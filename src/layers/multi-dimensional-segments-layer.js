@@ -1,6 +1,8 @@
 'use strict'
 
-export class MultiDimensionalSegmentsLayer extends SegmentsLayer {
+import { SegmentsLayer } from './segments-layer.js';
+
+class MultiDimensionalSegmentsLayer extends SegmentsLayer {
 
 	constructor(params) {
 		super(params);
@@ -44,3 +46,5 @@ export class MultiDimensionalSegmentsLayer extends SegmentsLayer {
 		return $segment;
 	}
 }
+
+export { MultiDimensionalSegmentsLayer };

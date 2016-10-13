@@ -2,7 +2,7 @@
 
 import { AbstractTimeAxisGenerator } from './abstract-time-axis-generator.js';
 
-export class BarTimeAxisGenerator extends AbstractTimeAxisGenerator {
+class BarTimeAxisGenerator extends AbstractTimeAxisGenerator {
 	constructor(params) {
 
 		params = params || {};
@@ -116,3 +116,5 @@ export class BarTimeAxisGenerator extends AbstractTimeAxisGenerator {
 		this._.beatsPerBar = v;
 	}
 }
+
+export { BarTimeAxisGenerator };

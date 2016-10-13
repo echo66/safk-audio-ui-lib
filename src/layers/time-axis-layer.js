@@ -1,8 +1,9 @@
 'use strict'
 
 import { Layer } from './layer.js';
+import { List } from '../utils/list.js';
 
-export class TimeAxisLayer extends Layer {
+class TimeAxisLayer extends Layer {
 
 	constructor(params) {
 		super({
@@ -11,12 +12,15 @@ export class TimeAxisLayer extends Layer {
 			defaultIterator: undefined, 
 			timeDomain: params.timeDomain || [0, 20], 
 			valueDomain: params.valueDomain || [0, 1], 
-			layerTagName: 'layer', 
-			layerElementTagName: 'axis', 
-			layerElementDatumHashAttribute: 'data-hash'
+			layerTagName: params.layerElementTagName || 'layer', 
+			layerElementTagName: params.layerElementTagName || 'axis', 
+			layerElementDatumHashAttribute: params.layerElementDatumHashAttribute || 'data-hash'
 		});
 
 		const that = this;
+
+		this._.tickContainerTagName = params.tickContainerTagName || 'tick-container';
+		this._.tickTagName = params.tickTagName || 'tick';
 
 		this.accessor('time', (d) => {
 			/* */
@@ -99,9 +103,9 @@ export class TimeAxisLayer extends Layer {
 		var $tickContainer = $axis.safk.activeDomEls.pop() || $axis.safk.unusedDomEls.pop();
 
 		if (!$tickContainer) {
-			$tickContainer = document.createElement('tick-container');
+			$tickContainer = document.createElement(this._.tickContainerTagName); 
 			$tickContainer.setAttribute('unused', false);
-			var $tick = document.createElement('tick');
+			var $tick = document.createElement(this._.tickTagName);
 			var $text = document.createElement('span');
 			$tickContainer.appendChild($tick);
 			$tickContainer.appendChild($text);
@@ -210,3 +214,5 @@ export class TimeAxisLayer extends Layer {
 	}
 
 }
+
+export { TimeAxisLayer };

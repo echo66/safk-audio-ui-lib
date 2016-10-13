@@ -1,6 +1,6 @@
 'use strict'
 
-export class List {
+class List {
 
 	constructor(propertyPrefix) { 
 		this.firstEl = undefined;
@@ -12,8 +12,8 @@ export class List {
 			this.nextPropertyName = propertyPrefix + "NextEl";
 		} else {
 			var i = List.counter++;
-			this.prevPropertyName = List.defaultPrefix + "" + i + "" + "PrevEl";
-			this.nextPropertyName = List.defaultPrefix + "" + i + "" + "NextEl";
+			this.prevPropertyName = List.defaultPointerPropertiesPrefix + "" + i + "" + "PrevEl";
+			this.nextPropertyName = List.defaultPointerPropertiesPrefix + "" + i + "" + "NextEl";
 		}
 	}
 
@@ -38,8 +38,8 @@ export class List {
 				next[this.prevPropertyName] = prev;
 				delete el[this.nextPropertyName];
 				delete el[this.prevPropertyName];
+				this.size--;
 			}
-			this.size--;
 		}
 	}
 
@@ -167,3 +167,5 @@ export class List {
 List.counter = 0;
 
 List.defaultPointerPropertiesPrefix = 'safkList';
+
+export { List };

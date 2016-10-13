@@ -1,6 +1,6 @@
 'use strict'
 
-export function linear() {
+function linear() {
 	let _domain = [0, 1];
 	let _range = [0, 1];
 
@@ -40,3 +40,5 @@ export function linear() {
 
 	return scale;
 }
+
+export { linear };

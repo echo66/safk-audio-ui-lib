@@ -1,16 +1,29 @@
 'use strict'
 
 import { EventEmitter } from '../utils/event-emitter.js';
-import { SegmentsLayer } from '../layers/segments-layer-v2.js';
+import { SegmentsLayer } from '../layers/segments-layer.js';
 import { SimpleSegmentEditController } from '../interaction-controllers/simple-segment-edit-controller.js';
 
-export class TimeScroller extends EventEmitter {
+class TimeScroller extends EventEmitter {
 	constructor(params) {
 		super();
 
 		const that = this;
 		this._ = {};
 		params = params || {};
+		
+		this._.restrictToAvailableTimeRange = (params.restrictToAvailableTimeRange !== undefined)? params.restrictToAvailableTimeRange : false;
+		this._.lockVisibleTimeRange = () => {
+			var newTime = Math.max(that._.scrollerSegment.time, that._.scrollerLayer.timeDomain[0])
+			var end1 = (that._.scrollerLayer.timeDomain[0] + that._.scrollerLayer.timeDomain[1]);
+			var end2 = (newTime + that._.scrollerSegment.duration);
+			if (end2 > end1) {
+				that._.scrollerSegment.time = Math.max(end1 - that._.scrollerSegment.duration, that._.scrollerLayer.timeDomain[0]);
+			} else {
+				that._.scrollerSegment.time = newTime;
+			}
+		};
+
 		this._.scrollerLayer = new SegmentsLayer(params);
 		this._.scrollerLayer.accessor('visible', (d, elementName) => {
 			switch (elementName) {
@@ -22,10 +35,6 @@ export class TimeScroller extends EventEmitter {
 			}
 		});
 		this._.scrollerLayer.timeDomain = params.availableTimeRange || this._.scrollerLayer.timeDomain;
-		this._.scrollerSegmentPreviousVersion = {
-			time: 0, 
-			duration: 20
-		};
 		this._.scrollerSegment = {
 			time: 0, 
 			duration: 20
@@ -40,24 +49,46 @@ export class TimeScroller extends EventEmitter {
 		};
 
 		this._.scrollerLayer.get_hash = (datum) => "scroll-segment";
-		this._.targetLayers = new Set();
+		this._.targets = new Set();
 		this._.scrollerLayer.set(this._.scrollerSegment);
 		
 
 		var editController = new SimpleSegmentEditController({ 
-			layer: this._.scrollerLayer, allowXEdit: true, allowYEdit: false
+			layer: this._.scrollerLayer, 
+			allowXEdit: true, 
+			allowYEdit: false, 
+			accessors: {
+				time: (d, v) => {
+					if (!isNaN(v)) {
+						d.time = v;
+						if (that._.restrictToAvailableTimeRange) 
+							that._.lockVisibleTimeRange();
+					}
+					return d.time;
+				}, 
+				duration: (d, v) => {
+					if (!isNaN(v)) {
+						d.duration = v;
+						if (that._.restrictToAvailableTimeRange) 
+							that._.lockVisibleTimeRange();
+					}
+					return d.duration;
+				}
+			}, 
+			manualControl: false
 		});
+		editController.start();
 
-		editController.on('start-edit', () => { 
+		editController.on('start-edit-layer', () => { 
 			that.emit('start-scrolling'); 
 		});
 
-		editController.on('edit', () => {
+		editController.on('edit-layer', () => {
 			that.refresh();
 			that.emit('scrolling');
 		});
 
-		editController.on('start-edit', () => { 
+		editController.on('end-edit-layer', () => { 
 			that.emit('end-scrolling'); 
 		});
 
@@ -91,19 +122,35 @@ export class TimeScroller extends EventEmitter {
 		return this._.scrollerLayer.layerDomEl;
 	}
 
-	add_target_layer(layer) {
-		this._.targetLayers.add(layer);
+	get restrictToAvailableTimeRange() {
+		return this._.restrictToAvailableTimeRange;
 	}
 
-	remove_target_layer(layer) {
-		this._.targetLayers.delete(layer);
+	set restrictToAvailableTimeRange(v) {
+		this._.restrictToAvailableTimeRange = v;
+	}
+
+	add(target) {
+		const that = this;
+		this._.targets.add(target);
+		requestAnimationFrame(() => {
+			target.timeDomain = that.visibleTimeRange;
+		});
+	}
+
+	remove(target) {
+		this._.targets.delete(target);
 	}
 
 	refresh() {
 		const that = this;
-		this._.targetLayers.forEach((layer) => {
-			layer.timeDomain = that.visibleTimeRange;
+		this._.targets.forEach((target) => {
+			requestAnimationFrame(() => {
+				target.timeDomain = that.visibleTimeRange;
+			});
 		});
 	}
 
 }
+
+export { TimeScroller };

@@ -2,7 +2,7 @@
 
 import { Layer } from './layer.js';
 
-export class PathsLayer extends Layer {
+class PathsLayer extends Layer {
 
 	constructor(params) {
 		super({
@@ -11,9 +11,9 @@ export class PathsLayer extends Layer {
 			defaultIterator: undefined, 
 			timeDomain: params.timeDomain || [0, 20], 
 			valueDomain: params.valueDomain || [0, 1], 
-			layerTagName: 'layer', 
-			layerElementTagName: 'path', 
-			layerElementDatumHashAttribute: 'data-hash'
+			layerTagName: params.layerTagName || 'layer', 
+			layerElementTagName: params.layerElementTagName || 'path', 
+			layerElementDatumHashAttribute: params.layerElementDatumHashAttribute || 'data-hash'
 		});
 
 		this._.$pathsSVG = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
@@ -93,3 +93,5 @@ export class PathsLayer extends Layer {
 	}
 
 }
+
+export { PathsLayer };

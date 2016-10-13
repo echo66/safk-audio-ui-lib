@@ -1,18 +1,25 @@
 'use strict'
 
-import { SegmentsLayer } from './segments-layer-v2.js';
+import { SegmentsLayer } from './segments-layer.js';
 import { WaveformsRenderingController } from '../utils/waveforms-rendering-controller.js';
 import { linear } from '../utils/linear-scale.js';
 
-export class WaveformsSegmentsLayer extends SegmentsLayer {
+class WaveformsSegmentsLayer extends SegmentsLayer {
 
 	constructor(params) {
 		super(params);
 
 		const that = this;
 
+		this._.headerTagName = params.headerTagName || 'header';
+		this._.waveformTagName = params.waveformTagName || 'waveform';
+		this._.waveformOverlayTagName = params.waveformOverlayTagName || 'waveform-overlay';
+
 		this.accessor('bufferTimeToPixel', (datum, samples, sampleRate, bufferStart, bufferCursor, bufferEnd) => {
 			return (bufferCursor - bufferStart) / sampleRate;
+		});
+		this.accessor('numberOfChannels', (d) => {
+			return 1;
 		});
 		this.accessor('channelData', (d, channelNumber) => {
 			return undefined;
@@ -55,6 +62,9 @@ export class WaveformsSegmentsLayer extends SegmentsLayer {
 				case 'vertical': 
 					return that.height;
 			}
+		});
+		this.accessor('numberOfSamplesPerChunk', (d) => {
+			return 44100;
 		});
 		this.accessor('allowWaveformRedraw', (d, $waveformEl) => {
 			/*
@@ -298,11 +308,11 @@ export class WaveformsSegmentsLayer extends SegmentsLayer {
 
 		$segment[safk] = $segment[safk] || {};
 
-		if (!$segment[safk].header) $segment.appendChild($segment[safk].header = document.createElement('header'));
+		if (!$segment[safk].header) $segment.appendChild($segment[safk].header = document.createElement(this._.headerTagName)); 
 
-		if (!$segment[safk].waveform) $segment.appendChild($segment[safk].waveform = document.createElement('waveform'));
+		if (!$segment[safk].waveform) $segment.appendChild($segment[safk].waveform = document.createElement(this._.waveformTagName));
 
-		if (!$segment[safk].waveformOverlay) $segment.appendChild($segment[safk].waveformOverlay = document.createElement('waveform-overlay'));
+		if (!$segment[safk].waveformOverlay) $segment.appendChild($segment[safk].waveformOverlay = document.createElement(this._.waveformOverlayTagName));
 
 		return $segment;
 	}
@@ -339,3 +349,5 @@ WaveformsSegmentsLayer.zIndexDefaults = {
 	'top-handler': 4, 
 	'bottom-handler': 4
 };
+
+export { WaveformsSegmentsLayer };

@@ -2,7 +2,7 @@
 
 import { Layer } from './layer.js';
 
-export class PointsLayer extends Layer {
+class PointsLayer extends Layer {
 
 	constructor(params) {
 		super({
@@ -11,9 +11,9 @@ export class PointsLayer extends Layer {
 			defaultIterator: undefined, 
 			timeDomain: params.timeDomain || [0, 20], 
 			valueDomain: params.valueDomain || [0, 1], 
-			layerTagName: 'layer', 
-			layerElementTagName: 'g', 
-			layerElementDatumHashAttribute: 'data-hash', 
+			layerTagName: params.layerTagName || 'layer', 
+			layerElementTagName: params.layerElementTagName || 'g', 
+			layerElementDatumHashAttribute: params.layerElementDatumHashAttribute || 'data-hash', 
 		});
 
 		const that = this;
@@ -172,3 +172,5 @@ export class PointsLayer extends Layer {
 	}
 
 }
+
+export { PointsLayer} ;

@@ -2,7 +2,7 @@
 
 import { EventEmitter } from '../utils/event-emitter.js';
 
-export class SelectionManager extends EventEmitter {
+class SelectionManager extends EventEmitter {
 	constructor() {
 		super();
 		this.selectedData = new Map();
@@ -71,13 +71,23 @@ export class SelectionManager extends EventEmitter {
 
 	apply_on_selected(layer, eachCallback, finalCallback) {
 		// const that = this;
-		this.selectedData.forEach((selectedData, layer) => {
+
+		var selectedData = this.selectedData.get(layer);
+		if (selectedData) {
 			selectedData.forEach((hash) => {
 				var datum = layer.get_datum(hash);
 				eachCallback && eachCallback(datum);
 			});
-		});
+		}
 		finalCallback && finalCallback();
+
+		// this.selectedData.forEach((selectedData, layer) => {
+		// 	selectedData.forEach((hash) => {
+		// 		var datum = layer.get_datum(hash);
+		// 		eachCallback && eachCallback(datum);
+		// 	});
+		// });
+		// finalCallback && finalCallback();
 	}
 
 	count_selected(layer) {
@@ -87,4 +97,42 @@ export class SelectionManager extends EventEmitter {
 		return 0;
 	}
 
+	get layers() {
+		var keysIt = this.selectedData.keys();
+
+		var it = {
+			next: function() {
+				return keysIt.next();
+			}
+		};
+
+		return it;
+	}
+
+	get_selected_datums(layer) {
+		var selectedDatums = this.selectedData.get(layer);
+
+		if (selectedDatums) {
+			var valsIt = selectedDatums.values();
+
+			var it = {
+				next: function() {
+					var e = valsIt.next();
+					e.value = layer.get_datum(e.value);
+					return e;
+				}
+			};
+
+			return it;
+		}
+
+		return {
+			next: function() {
+				return { value: undefined, done: true };
+			}
+		}
+	}
+
 }
+
+export { SelectionManager };

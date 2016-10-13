@@ -13,7 +13,7 @@
  * @property {Object.<string, EventEmitterListenerFunc[]>} _listeners
  * @property {string[]} events
  */
-export class EventEmitter {
+class EventEmitter {
 
     /**
      * @constructor
@@ -195,3 +195,5 @@ EventEmitter.DEFAULT_VALUES = {
     emitDelay: 10,
     strictMode: false
 };
+
+export { EventEmitter };

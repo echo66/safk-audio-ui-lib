@@ -2,7 +2,7 @@
 
 import { Layer } from './layer.js';
 
-export class MarkersLayer extends Layer {
+class MarkersLayer extends Layer {
 
 	constructor(params) {
 		super({
@@ -11,12 +11,16 @@ export class MarkersLayer extends Layer {
 			defaultIterator: undefined, 
 			timeDomain: params.timeDomain || [0, 20], 
 			valueDomain: params.valueDomain || [0, 1], 
-			layerTagName: 'layer', 
-			layerElementTagName: 'marker', 
-			layerElementDatumHashAttribute: 'data-hash'
+			layerTagName: params.layerTagName || 'layer', 
+			layerElementTagName: params.layerElementTagName || 'marker', 
+			layerElementDatumHashAttribute: params.layerElementDatumHashAttribute || 'data-hash'
 		});
 
 		// const that = this;
+
+		this._.contentTagName = params.contentTagName = 'content';
+		this._.stickTagName = params.stickTagName || 'stick';
+		this._.handlerTagName = params.handlerTagName || 'handler';
 
 		// DEFINE ACCESSORS
 		{
@@ -153,13 +157,15 @@ export class MarkersLayer extends Layer {
 
 		$marker.safk = $marker.safk || {};
 
-		if (!$marker.safk.content) $marker.appendChild($marker.safk.content = document.createElement('content'));
+		if (!$marker.safk.content) $marker.appendChild($marker.safk.content = document.createElement(this._.contentTagName));
 		
-		if (!$marker.safk.stick) $marker.appendChild($marker.safk.stick = document.createElement('stick'));
+		if (!$marker.safk.stick) $marker.appendChild($marker.safk.stick = document.createElement(this._.stickTagName));
 		
-		if (!$marker.safk.handler) $marker.appendChild($marker.safk.handler = document.createElement('handler'));
+		if (!$marker.safk.handler) $marker.appendChild($marker.safk.handler = document.createElement(this._.handlerTagName));
 
 		return $marker;
 	}
 
 }
+
+export { MarkersLayer };

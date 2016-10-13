@@ -4,7 +4,7 @@ import { List } from '../utils/list.js';
 import { EventEmitter } from '../utils/event-emitter.js';
 import { linear } from '../utils/linear-scale.js';
 
-export class Layer extends EventEmitter {
+class Layer extends EventEmitter {
 
 	/* 
 	 {
@@ -24,7 +24,7 @@ export class Layer extends EventEmitter {
 		this._ = {};
 		params = params || {};
 
-		this._.layerTagName = params.layerTagName;
+		this._.layerTagName = params.layerTagName || 'div';
 		this._.layerElementTagName = params.layerElementTagName;
 		this._.layerElementDatumHashAttribute = params.layerElementDatumHashAttribute;
 		this._.safkCustomProperty = params.safkCustomProperty || 'safk';
@@ -41,8 +41,11 @@ export class Layer extends EventEmitter {
 		this._.$el.style.display = "block";
 		this._.$el.style.height = layerHeight + "px";
 		this._.$el.style.width = layerWidth + "px";
+		this._.$el[that._.safkCustomProperty] = {};
+		this._.$el[that._.safkCustomProperty].layer = this;
 
 		this._.$container = document.createElement('div');
+		this._.$container.setAttribute('name', 'layer-elements-container');
 		this._.$container.style.position = "relative";
 		this._.$container.style.width = layerWidth + "px";
 		this._.$container.style.height = layerHeight + "px";
@@ -52,6 +55,20 @@ export class Layer extends EventEmitter {
 		this._.layerElementsParent = this._.$container || params.layerElementsParent;
 
 		this._.$el.appendChild(this._.$container);
+
+		this._.$interactions = document.createElement('div');
+		this._.$interactions.setAttribute('name', 'layer-interactions-container');
+		this._.$interactions.style.position = "relative";
+		this._.$interactions.style.width = layerWidth + "px";
+		this._.$interactions.style.height = layerHeight + "px";
+		this._.$interactions.style.left = "0px";
+		this._.$interactions.style.top = "0px";
+		this._.$interactions.style.pointerEvents = "none";
+
+		this._.$el.appendChild(this._.$interactions);
+
+		this._.$container.style.zIndex = 1;
+		this._.$interactions.style.zIndex = 2;
 
 		this._.timeDomain = params.timeDomain;
 		this._.valueDomain = params.valueDomain;
@@ -133,10 +150,10 @@ export class Layer extends EventEmitter {
 										start: function(layer) {
 											this.entry.value = undefined;
 											this.entry.done = false;
-											this.activeElsList = that._.activeElsList.iterator();
+											this.activeElsListIt = that._.activeElsList.iterator();
 										}, 
 										next: function() {
-											var entry = this.activeElsList.next();
+											var entry = this.activeElsListIt.next();
 
 											if (!entry.done) {
 												var $el = entry.value;
@@ -154,7 +171,7 @@ export class Layer extends EventEmitter {
 										stop: function() {
 											this.entry.value = undefined;
 											this.entry.done = false;
-											this.activeElsList = undefined;
+											this.activeElsListIt = undefined;
 										}
 									};
 	}
@@ -250,6 +267,7 @@ export class Layer extends EventEmitter {
 		$el.style.display = "none";
 		$el.setAttribute('unused', true);
 		this.unassociate_element_to($el, hash);
+		this._.activeElsList.remove($el);
 		this._.unusedElsList.push($el);
 	}
 
@@ -310,6 +328,17 @@ export class Layer extends EventEmitter {
 		return this._.$el.querySelector(this._.layerElementTagName + '[' + this._.layerElementDatumHashAttribute + '="' + hash + '"]');
 	}
 
+	get_datum_from_element($el) {
+		if (this.has_element($el)) {
+			return this.get_datum($el[this._.safkCustomProperty].datumHash);
+		}
+		return undefined;
+	}
+
+	has_element($el) {
+		return this._.activeElsList.has($el) && $el[this._.safkCustomProperty].layer === this;
+	}
+
 	/*
 	 * Remove the DOM (or, in specific cases, the rendered object) associated with the datum hash.
 	 */
@@ -330,7 +359,27 @@ export class Layer extends EventEmitter {
 		return this._.accessors[id];
 	}
 
+	get_horizontal_pixel_value(time) {
+		// TODO
+	}
+
+	get_vertical_pixel_value(value) {
+		// TODO
+	}
+
+	get_time(pixels) {
+		return this._.timeToPixel.invert(pixels) + this._.timeOffset;
+	}
+
+	get_value(pixels) {
+		return this._.valueToPixel.invert(pixels) + this._.valueOffset;
+	}
+
 	// Getters & Setters
+	get elements() {
+		return this._.activeElsList.iterator();
+	}
+
 	get autoRefresh() {
 		return this._.autoRefresh;
 	}
@@ -364,6 +413,7 @@ export class Layer extends EventEmitter {
 
 		this._.$el.style.width = layerWidth + "px";
 		this._.$container.style.width = layerWidth + "px";
+		this._.$interactions.style.width = layerWidth + "px";
 
 		if (this.autoRefresh)
 			this.update();
@@ -389,6 +439,8 @@ export class Layer extends EventEmitter {
 		this._.valueToPixel.range([0, layerHeight]);
 
 		this._.$el.style.height = layerHeight + "px";
+		this._.$container.style.height = layerHeight + "px";
+		this._.$interactions.style.height = layerHeight + "px";
 
 		if (this.autoRefresh)
 			this.update();
@@ -415,7 +467,8 @@ export class Layer extends EventEmitter {
 
 		this._.timeToPixel.domain(this._.timeDomain);
 
-		this._.$el.children[0].style.left = (this._.timeToPixel(-this._.timeOffset)) + 'px';
+		this._.$container.style.left = (this._.timeToPixel(-this._.timeOffset)) + 'px';
+		this._.$interactions.style.left = this._.$container.style.left;
 
 		if (sameInterval) {
 			if (this.refreshOnScroll) {
@@ -465,7 +518,8 @@ export class Layer extends EventEmitter {
 
 		this._.valueToPixel.domain(this._.valueDomain);
 
-		this._.$el.children[0].style.top = (this._.valueToPixel(this._.valueOffset)) + 'px';
+		this._.$container.style.top = (this._.valueToPixel(this._.valueOffset)) + 'px';
+		this._.$interactions.style.top = this._.$container.style.top;
 
 		if (sameInterval) {
 			if (this.refreshOnScroll) {
@@ -486,12 +540,36 @@ export class Layer extends EventEmitter {
 		return this._.$el;
 	}
 
+	get mainDomEl() {
+		return this._.$container;
+	}
+
+	get interactionsDomEl() {
+		return this._.$interactions;
+	}
+
 	get defaultIterator() {
 		return this._.defaultIterator;
 	}
 
 	set defaultIterator(v) {
 		this._.defaultIterator = v;
+	}
+
+	get safkCustomProperty() {
+		return this._.safkCustomProperty;
+	}
+
+	get layerTagName() {
+		return this._.layerTagName;
+	}
+
+	get layerElementTagName() {
+		return this._.layerElementTagName;
+	}
+
+	get layerElementDatumHashAttribute() {
+		return this._.layerElementDatumHashAttribute;
 	}
 
 	// Events Listeners
@@ -515,3 +593,5 @@ export class Layer extends EventEmitter {
 	}
 
 }
+
+export { Layer };

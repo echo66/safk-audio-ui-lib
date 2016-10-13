@@ -1,11 +1,13 @@
 'use strict'
 
-import { SegmentsLayer } from './segments-layer-v2.js';
+import { SegmentsLayer } from './segments-layer.js';
 
-export class HTMLSegmentsLayer extends SegmentsLayer {
+class HTMLSegmentsLayer extends SegmentsLayer {
 	
 	constructor(params) {
 		super(params);
+
+		this._.contentTagName = params.contentTagName || 'content';
 
 		this.accessor('innerHTML', (d, outerHTML) => { 
 			/*
@@ -39,10 +41,12 @@ export class HTMLSegmentsLayer extends SegmentsLayer {
 
 		$segment.safk = $segment.safk || {};
 
-		if (!$segment.safk.content) $segment.appendChild($segment.safk.content = document.createElement('content'));
+		if (!$segment.safk.content) $segment.appendChild($segment.safk.content = document.createElement(this._.contentTagName));
 
 
 		return $segment;
 	}
 
 }
+
+export { HTMLSegmentsLayer };

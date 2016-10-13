@@ -2,7 +2,7 @@
 
 import { AbstractTimeAxisGenerator } from './abstract-time-axis-generator.js';
 
-class SimpleTimeAxisGenerator extends AbstractTimeAxisGenerator {
+class StandardTimeAxisGenerator extends AbstractTimeAxisGenerator {
 	constructor(params) {
 
 		params = params || {};
@@ -14,11 +14,15 @@ class SimpleTimeAxisGenerator extends AbstractTimeAxisGenerator {
 	}
 
 	next_time(t0, currentTime, t1, layer) {
-		return currentTime + this._.timeStep;
+		return Math.round(currentTime + Math.max(1, Math.round(this._.timeStep)));
 	}
 
 	text(time, layer) {
-		return time + '';
+		var seconds = Math.round(time % 60);
+		var minutes = Math.floor((time / 60) % 60);
+		var hours = Math.floor((time / 60) / 60);
+		
+		return ((hours !== 0)? hours + 'h:' : '') + ((minutes !== 0)? minutes + 'm:' : '') + seconds + 's';
 	}
 
 	textOffset(time, layer, axis) {
@@ -71,4 +75,4 @@ class SimpleTimeAxisGenerator extends AbstractTimeAxisGenerator {
 	}
 }
 
-export { SimpleTimeAxisGenerator };
+export { StandardTimeAxisGenerator };
